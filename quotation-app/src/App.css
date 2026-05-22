@@ -1,0 +1,25 @@
+/* App specific styles */
+.app-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .app-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .app-container {
+    display: block;
+  }
+  body {
+    background-color: white;
+  }
+}

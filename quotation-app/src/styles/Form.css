@@ -1,0 +1,76 @@
+.form-container {
+  padding: 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input, 
+.form-group textarea {
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-group input:focus, 
+.form-group textarea:focus {
+  outline: none;
+  border-color: #646cff;
+  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
+}
+
+.print-button {
+  width: 100%;
+  padding: 1rem;
+  margin-top: 2rem;
+  background: linear-gradient(135deg, #646cff 0%, #4338ca 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
+}
+
+.print-button:hover {
+  background: linear-gradient(135deg, #535bf2 0%, #3730a3 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(100, 108, 255, 0.4);
+}
+
+.print-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(100, 108, 255, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .form-container {
+    background-color: #2a2a2a;
+    border-color: #444;
+  }
+  .form-group label {
+    color: #eee;
+  }
+  .form-group input, 
+  .form-group textarea {
+    background-color: #333;
+    color: white;
+    border-color: #555;
+  }
+}

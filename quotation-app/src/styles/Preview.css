@@ -1,0 +1,210 @@
+.preview-container {
+  padding: 1.5cm;
+  background-color: white;
+  color: #000;
+  width: 21cm;
+  min-height: 29.7cm;
+  box-sizing: border-box;
+  font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif;
+  border: 1px solid #ddd;
+  margin: 0 auto;
+}
+
+.company-header {
+  text-align: center;
+  border-bottom: 2px solid #000;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.company-name {
+  font-size: 20pt;
+  margin: 0;
+  font-weight: bold;
+}
+
+.main-title {
+  font-size: 24pt;
+  margin: 10pt 0 0 0;
+  letter-spacing: 15pt;
+  text-decoration: underline;
+}
+
+.company-info {
+  font-size: 9pt;
+  margin-top: 5pt;
+}
+
+.company-info p {
+  margin: 2pt 0;
+}
+
+.quotation-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10pt;
+  margin-bottom: 1rem;
+}
+
+.meta-item {
+  display: flex;
+  border-bottom: 1px solid #000;
+  padding: 2pt 0;
+}
+
+.meta-item .label {
+  font-weight: bold;
+  width: 80pt;
+}
+
+.meta-item .value {
+  flex: 1;
+}
+
+.quotation-table-main {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  table-layout: fixed;
+}
+
+.quotation-table-main th, 
+.quotation-table-main td {
+  border: 1px solid #000;
+  padding: 6pt;
+  font-size: 11pt;
+  word-break: break-all;
+}
+
+.quotation-table-main th {
+  background-color: #f2f2f2;
+  text-align: center;
+}
+
+.quotation-table-main td {
+  height: 25pt;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+  padding-right: 10pt !important;
+}
+
+.multi-line {
+  white-space: pre-wrap;
+  vertical-align: top;
+}
+
+.total-row {
+  font-weight: bold;
+  text-align: right;
+  background-color: #eee;
+}
+
+.quotation-terms-grid {
+  margin-top: 10pt;
+  margin-bottom: 10pt;
+  font-size: 11pt;
+}
+
+.term-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  margin-bottom: 5pt;
+  border-bottom: 1px dotted #ccc;
+  padding-bottom: 3pt;
+}
+
+.term-item {
+  display: flex;
+  align-items: center;
+}
+
+.quotation-footer-section {
+  margin-top: 1rem;
+}
+
+.notice {
+  font-size: 9pt;
+  line-height: 1.4;
+}
+
+.notice p {
+  font-weight: bold;
+  margin-bottom: 2pt;
+}
+
+.notice ol {
+  margin: 0;
+  padding-left: 15pt;
+}
+
+.custom-notice-list {
+  list-style-type: none;
+  padding-left: 0 !important;
+}
+
+.custom-notice-list li {
+  counter-increment: notice-counter;
+  margin-bottom: 4pt;
+  display: flex;
+}
+
+.custom-notice-list li::before {
+  content: "(" counter(notice-counter) ") ";
+  margin-right: 5pt;
+  white-space: nowrap;
+}
+
+.contract-section {
+  margin-top: 15pt;
+  border-top: 1px solid #000;
+  padding-top: 10pt;
+}
+
+.contract-title {
+  font-weight: bold;
+  font-size: 12pt;
+  margin-bottom: 8pt;
+  text-decoration: underline;
+}
+
+.contract-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20pt;
+}
+
+.contract-party p {
+  margin: 4pt 0;
+  font-size: 10pt;
+  line-height: 1.4;
+}
+
+.doc-footer {
+  margin-top: 20pt;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8pt;
+  color: #333;
+}
+
+@media print {
+  body {
+    background-color: white;
+    margin: 0;
+  }
+  .preview-container {
+    border: none;
+    margin: 0;
+    width: 100%;
+    padding: 0;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
