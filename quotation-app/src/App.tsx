@@ -61,7 +61,7 @@ function App() {
     mobile: '',
     fax: '',
     items: type === 'single' ? [createEmptyItem()] : [],
-    bookletJobs: type === 'booklet' ? [createEmptyBookletJob()] : [],
+    bookletJobs: (type === 'booklet' || type === 'dept') ? [createEmptyBookletJob()] : [],
     remarks: '',
     orderYear: '',
     orderMonth: '',

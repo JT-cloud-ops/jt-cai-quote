@@ -142,11 +142,11 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                 {/* 百貨類專用：總公司量列 */}
                 {hasHQ && (
                   <tr>
-                    <td className="text-right" style={{ paddingRight: '10pt' }}>總公司量</td>
                     <td>&nbsp;</td>
                     <td>&nbsp;</td>
                     <td>&nbsp;</td>
-                    <td>{job.hqQuantity}</td>
+                    <td>&nbsp;</td>
+                    <td className="multi-line" style={{ fontWeight: 'bold' }}>總公司量：{job.hqQuantity}{job.unit}</td>
                   </tr>
                 )}
               </React.Fragment>

@@ -153,7 +153,21 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     URL.revokeObjectURL(url);
   };
 
+  // 驗證百貨類是否輸入總公司量
+  const validateDeptData = () => {
+    if (data.quotationType === 'dept') {
+      const missingHQ = data.bookletJobs.some(job => !job.hqQuantity || job.hqQuantity.trim() === '');
+      if (missingHQ) {
+        alert('百貨類報價必須輸入「總公司量」，請填寫後再繼續。');
+        return false;
+      }
+    }
+    return true;
+  };
+
   const saveToHistory = () => {
+    if (!validateDeptData()) return;
+
     const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
     if (!data.customerName && !firstJob) {
       alert('請至少輸入客戶名稱或印件名稱再儲存');
@@ -171,6 +185,11 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     updateCustomerDatabase(data);
     handleExport();
     alert('儲存成功！(已儲存客戶資料、歷史紀錄並下載備份)');
+  };
+
+  const handlePrint = () => {
+    if (!validateDeptData()) return;
+    window.print();
   };
 
   const selectCustomer = (c: Customer) => {
@@ -301,7 +320,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
         </div>
       </div>
 
-      <div className="section-title">{data.quotationType === 'booklet' ? '冊子印件資訊' : '印件品項'}</div>
+      <div className="section-title">{data.quotationType === 'single' ? '印件品項' : '冊子印件資訊'}</div>
       
       {/* 渲染單張類品項 */}
       {data.quotationType === 'single' && data.items.map((item, index) => (
@@ -322,8 +341,8 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
       ))}
       {data.quotationType === 'single' && <button className="add-btn" onClick={addItem}>+ 新增品項</button>}
 
-      {/* 渲染冊子類品項 */}
-      {data.quotationType === 'booklet' && data.bookletJobs.map((job, jobIndex) => (
+      {/* 渲染冊子/百貨類品項 */}
+      {(data.quotationType === 'booklet' || data.quotationType === 'dept') && data.bookletJobs.map((job, jobIndex) => (
         <div key={job.id} className="booklet-job-box" style={{ background: '#fff', border: '1px solid #ddd', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
           <div className="form-group"><label>冊子名稱</label><input type="text" name="jobName" value={job.jobName} onChange={(e) => handleBookletJobChange(jobIndex, e)} /></div>
           <div className="form-row">
@@ -336,8 +355,8 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
           </div>
           {data.quotationType === 'dept' && (
             <div className="form-group">
-              <label>總公司量</label>
-              <input type="text" name="hqQuantity" value={job.hqQuantity} onChange={(e) => handleBookletJobChange(jobIndex, e)} placeholder="輸入總公司量資訊" />
+              <label style={{ color: '#d32f2f', fontWeight: 'bold' }}>總公司量 (必填)</label>
+              <input type="text" name="hqQuantity" value={job.hqQuantity} onChange={(e) => handleBookletJobChange(jobIndex, e)} placeholder="請輸入總公司量資訊" style={{ borderColor: !job.hqQuantity ? '#d32f2f' : '#ccc' }} />
             </div>
           )}
           
@@ -387,7 +406,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
 
       <div className="action-buttons">
         <button className="save-btn" onClick={saveToHistory}>儲存此報價單</button>
-        <button className="print-button" onClick={() => window.print()}>列印報價單 (PDF)</button>
+        <button className="print-button" onClick={handlePrint}>列印報價單 (PDF)</button>
       </div>
     </div>
   );
