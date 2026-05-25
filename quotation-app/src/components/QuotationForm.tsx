@@ -154,8 +154,26 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     reader.readAsText(file);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLButtonElement) {
+        return; // 保留 Textarea 換行和 Button 的預設 Enter 行為
+      }
+      e.preventDefault();
+      const form = e.currentTarget;
+      // 找出所有可聚焦的輸入框、選單與按鈕
+      const elements = Array.from(form.querySelectorAll<HTMLElement>(
+        'input:not([type="hidden"]):not([style*="display: none"]), select, textarea, button.add-btn'
+      ));
+      const index = elements.indexOf(e.target as HTMLElement);
+      if (index > -1 && index < elements.length - 1) {
+        elements[index + 1].focus();
+      }
+    }
+  };
+
   return (
-    <div className="form-container no-print">
+    <div className="form-container no-print" onKeyDown={handleKeyDown}>
       <div className="form-header">
         <h2>{data.quotationType === 'single' ? '單張類' : data.quotationType === 'booklet' ? '冊子類' : '百貨類'}報價輸入</h2>
         <div className="header-actions">
