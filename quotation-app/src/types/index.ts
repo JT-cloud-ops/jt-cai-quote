@@ -38,6 +38,7 @@ export interface BookletJob {
   quantity: string;
   unit: string;
   unitPrice: string;
+  hqQuantity: string; // 總公司量 (百貨類使用)
   parts: BookletPart[];
 }
 

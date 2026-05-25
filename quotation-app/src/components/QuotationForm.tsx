@@ -334,6 +334,12 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
             <div className="form-group"><label>總數量</label><div style={{ display: 'flex', gap: '0.5rem' }}><input type="text" name="quantity" value={job.quantity} onChange={(e) => handleBookletJobChange(jobIndex, e)} style={{ flex: 1 }} /><select name="unit" value={job.unit} onChange={(e) => handleBookletJobChange(jobIndex, e)} style={{ padding: '0.6rem', borderRadius: '4px', border: '1px solid #ccc' }}><option value="本">本</option><option value="份">份</option></select></div></div>
             <div className="form-group"><label>每本單價</label><input type="text" name="unitPrice" value={job.unitPrice} onChange={(e) => handleBookletJobChange(jobIndex, e)} /></div>
           </div>
+          {data.quotationType === 'dept' && (
+            <div className="form-group">
+              <label>總公司量</label>
+              <input type="text" name="hqQuantity" value={job.hqQuantity} onChange={(e) => handleBookletJobChange(jobIndex, e)} placeholder="輸入總公司量資訊" />
+            </div>
+          )}
           
           <div className="parts-list" style={{ marginTop: '1rem' }}>
             {job.parts.map((part, partIndex) => (

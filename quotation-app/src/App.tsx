@@ -45,6 +45,7 @@ function App() {
     quantity: '',
     unit: '本',
     unitPrice: '',
+    hqQuantity: '',
     parts: [
       createEmptyBookletPart('封面'),
       createEmptyBookletPart('扉頁'),

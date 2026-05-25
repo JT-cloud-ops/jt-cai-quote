@@ -27,7 +27,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
       const price = parseFloat(item.unitPrice) || 0;
       return sum + Math.round(qty * price);
     }, 0);
-  } else if (data.quotationType === 'booklet') {
+  } else if (data.quotationType === 'booklet' || data.quotationType === 'dept') {
     subtotal = data.bookletJobs.reduce((sum, job) => {
       const qty = parseFloat(job.quantity) || 0;
       const price = parseFloat(job.unitPrice) || 0;
@@ -45,9 +45,12 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
   // 計算目前顯示的總列數，用來補足 7 列
   const getCurrentRowCount = () => {
     if (data.quotationType === 'single') return data.items.length;
-    if (data.quotationType === 'booklet') {
-      // 每個 Job 佔 1 行(標題) + N 行(Part)
-      return data.bookletJobs.reduce((count, job) => count + 1 + job.parts.length, 0);
+    if (data.quotationType === 'booklet' || data.quotationType === 'dept') {
+      // 每個 Job 佔 1 行(標題) + N 行(Part) + (百貨類可能有的 1 行 HQ量)
+      return data.bookletJobs.reduce((count, job) => {
+        const hasHQ = data.quotationType === 'dept' && job.hqQuantity;
+        return count + 1 + job.parts.length + (hasHQ ? 1 : 0);
+      }, 0);
     }
     return 0;
   };
@@ -107,10 +110,11 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
             );
           })}
 
-          {/* 冊子類渲染 */}
-          {data.quotationType === 'booklet' && data.bookletJobs.map((job) => {
+          {/* 冊子/百貨類渲染 */}
+          {(data.quotationType === 'booklet' || data.quotationType === 'dept') && data.bookletJobs.map((job) => {
             const amount = Math.round((parseFloat(job.quantity) || 0) * (parseFloat(job.unitPrice) || 0));
-            const totalRowsForJob = 1 + job.parts.length;
+            const hasHQ = data.quotationType === 'dept' && job.hqQuantity;
+            const totalRowsForJob = 1 + job.parts.length + (hasHQ ? 1 : 0);
             
             return (
               <React.Fragment key={job.id}>
@@ -133,9 +137,18 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                     <td>{part.printColor}</td>
                     <td>{part.paperName}</td>
                     <td className="multi-line">{part.processingDetails}</td>
-                    {/* 數量、單價、金額已被 rowSpan 合併 */}
                   </tr>
                 ))}
+                {/* 百貨類專用：總公司量列 */}
+                {hasHQ && (
+                  <tr>
+                    <td className="text-right" style={{ paddingRight: '10pt' }}>總公司量</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>{job.hqQuantity}</td>
+                  </tr>
+                )}
               </React.Fragment>
             );
           })}
