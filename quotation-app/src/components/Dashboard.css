@@ -1,0 +1,131 @@
+.dashboard-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif;
+  text-align: center;
+}
+
+.dashboard-header h1 {
+  color: #333;
+  margin-bottom: 2rem;
+  font-size: 2.5rem;
+  border-bottom: 3px solid #646cff;
+  display: inline-block;
+  padding-bottom: 0.5rem;
+}
+
+.sales-setup-box {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.sales-setup-box h3 {
+  margin-top: 0;
+  color: #646cff;
+  font-size: 1.2rem;
+}
+
+.sales-form {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 1rem 0;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.input-group label {
+  font-weight: bold;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.input-group input {
+  padding: 0.6rem 1rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  width: 200px;
+}
+
+.input-group input:focus {
+  border-color: #646cff;
+  outline: none;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: #888;
+  margin: 0;
+}
+
+.type-selection {
+  margin: 3rem 0;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  border: none;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.type-btn:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 25px rgba(100, 108, 255, 0.2);
+}
+
+.btn-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.btn-text {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.type-btn.single:hover .btn-text { color: #646cff; }
+.type-btn.booklet:hover .btn-text { color: #4CAF50; }
+.type-btn.dept:hover .btn-text { color: #FF9800; }
+
+.dashboard-footer {
+  margin-top: 5rem;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .button-grid {
+    grid-template-columns: 1fr;
+  }
+  .sales-form {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+}

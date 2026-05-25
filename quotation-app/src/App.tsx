@@ -4,10 +4,14 @@ import './styles/Form.css'
 import './styles/Preview.css'
 import QuotationForm from './components/QuotationForm'
 import QuotationPreview from './components/QuotationPreview'
+import Dashboard from './components/Dashboard'
 import type { QuotationData, QuotationItem } from './types'
 
+type ViewMode = 'dashboard' | 'single' | 'booklet' | 'dept';
+
 function App() {
-  // 建立隨機 ID 的替代方案（確保在非 HTTPS 環境也能運作）
+  const [view, setView] = useState<ViewMode>('dashboard');
+
   const generateId = () => {
     return Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
   };
@@ -47,19 +51,55 @@ function App() {
   const [quotationData, setQuotationData] = useState<QuotationData>(getInitialData());
 
   const handleReset = () => {
-    setQuotationData(getInitialData());
+    if (confirm('確定要清空所有內容嗎？')) {
+      setQuotationData(getInitialData());
+    }
   };
+
+  const handleSalesChange = (name: string, mobile: string) => {
+    setQuotationData(prev => ({ ...prev, salesName: name, salesMobile: mobile }));
+    localStorage.setItem('lastSalesName', name);
+    localStorage.setItem('lastSalesMobile', mobile);
+  };
+
+  // 返回主選單
+  const backToDashboard = () => setView('dashboard');
 
   return (
     <div className="app-container">
-      <QuotationForm 
-        data={quotationData} 
-        onChange={setQuotationData} 
-        onReset={handleReset}
-      />
-      <QuotationPreview 
-        data={quotationData} 
-      />
+      {view === 'dashboard' ? (
+        <Dashboard 
+          salesName={quotationData.salesName}
+          salesMobile={quotationData.salesMobile}
+          onSalesChange={handleSalesChange}
+          onSelectType={(type) => setView(type)}
+        />
+      ) : (
+        <>
+          <div className="view-header no-print" style={{ marginBottom: '1rem', textAlign: 'left' }}>
+            <button 
+              onClick={backToDashboard}
+              style={{ padding: '0.5rem 1rem', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}
+            >
+              ← 返回主選單
+            </button>
+            <span style={{ marginLeft: '1rem', fontWeight: 'bold', color: '#666' }}>
+              正在使用：{view === 'single' ? '單張類報價' : view === 'booklet' ? '冊子類報價' : '百貨類報價'}
+            </span>
+          </div>
+          
+          <div className="quotation-layout" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+            <QuotationForm 
+              data={quotationData} 
+              onChange={setQuotationData} 
+              onReset={handleReset}
+            />
+            <QuotationPreview 
+              data={quotationData} 
+            />
+          </div>
+        </>
+      )}
     </div>
   )
 }
