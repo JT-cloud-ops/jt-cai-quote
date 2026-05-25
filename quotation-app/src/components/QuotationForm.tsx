@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { QuotationData, QuotationItem, Customer, BookletJob, BookletPart } from '../types';
+import type { QuotationData, QuotationItem, Customer, BookletPart } from '../types';
+import SingleSheetForm from './forms/SingleSheetForm';
+import BookletForm from './forms/BookletForm';
 
 interface Props {
   data: QuotationData;
@@ -21,25 +23,16 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   const [showCustomerList, setShowCustomerList] = useState(false);
   const customerListRef = useRef<HTMLDivElement>(null);
 
-  // 建立隨機 ID
-  const generateId = () => {
-    return Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
-  };
+  const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
 
   useEffect(() => {
     const savedHistory = localStorage.getItem('quotationHistory');
-    if (savedHistory) {
-      try { setHistory(JSON.parse(savedHistory)); } catch (e) { console.error(e); }
-    }
+    if (savedHistory) try { setHistory(JSON.parse(savedHistory)); } catch (e) { console.error(e); }
     const savedCustomers = localStorage.getItem('customerDatabase');
-    if (savedCustomers) {
-      try { setCustomers(JSON.parse(savedCustomers)); } catch (e) { console.error(e); }
-    }
+    if (savedCustomers) try { setCustomers(JSON.parse(savedCustomers)); } catch (e) { console.error(e); }
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (customerListRef.current && !customerListRef.current.contains(event.target as Node)) {
-        setShowCustomerList(false);
-      }
+      if (customerListRef.current && !customerListRef.current.contains(event.target as Node)) setShowCustomerList(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -48,72 +41,42 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     onChange({ ...data, [name]: value });
-    
     if (name === 'salesName') localStorage.setItem('lastSalesName', value);
     if (name === 'salesMobile') localStorage.setItem('lastSalesMobile', value);
     if (name === 'customerName' && value.length > 0) setShowCustomerList(true);
   };
 
-  // --- 單張類處理邏輯 ---
+  // --- 單張類 ---
   const handleItemChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const newItems = [...data.items];
     newItems[index] = { ...newItems[index], [name]: value };
     onChange({ ...data, items: newItems });
   };
-
   const addItem = () => {
-    const newItem: QuotationItem = {
-      id: generateId(),
-      jobName: '',
-      sheetSize: '',
-      printColor: '',
-      paperName: '',
-      processingDetails: '',
-      quantity: '',
-      unit: '份',
-      unitPrice: '',
-    };
-    onChange({ ...data, items: [...data.items, newItem] });
+    onChange({ ...data, items: [...data.items, { id: generateId(), jobName: '', sheetSize: '', printColor: '', specialColor: '', paperName: '', processingDetails: '', quantity: '', unit: '份', unitPrice: '' }] });
   };
-
   const removeItem = (index: number) => {
     if (data.items.length <= 1) return;
-    const newItems = data.items.filter((_, i) => i !== index);
-    onChange({ ...data, items: newItems });
+    onChange({ ...data, items: data.items.filter((_, i) => i !== index) });
   };
 
-  // --- 冊子類處理邏輯 ---
+  // --- 冊子/百貨類 ---
   const handleBookletJobChange = (jobIndex: number, e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
     const newJobs = [...data.bookletJobs];
-    newJobs[jobIndex] = { ...newJobs[jobIndex], [name]: value };
+    newJobs[jobIndex] = { ...newJobs[jobIndex], [e.target.name]: e.target.value };
     onChange({ ...data, bookletJobs: newJobs });
   };
-
   const handleBookletPartChange = (jobIndex: number, partIndex: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
     const newJobs = [...data.bookletJobs];
-    const newParts = [...newJobs[jobIndex].parts];
-    newParts[partIndex] = { ...newParts[partIndex], [name]: value };
-    newJobs[jobIndex] = { ...newJobs[jobIndex], parts: newParts };
+    newJobs[jobIndex].parts[partIndex] = { ...newJobs[jobIndex].parts[partIndex], [e.target.name]: e.target.value };
     onChange({ ...data, bookletJobs: newJobs });
   };
-
   const addBookletPart = (jobIndex: number) => {
     const newJobs = [...data.bookletJobs];
-    const newPart: BookletPart = {
-      id: generateId(),
-      partName: '',
-      sheetSize: '',
-      printColor: '',
-      paperName: '',
-      processingDetails: '',
-    };
-    newJobs[jobIndex].parts.push(newPart);
+    newJobs[jobIndex].parts.push({ id: generateId(), partName: '', sheetSize: '', printColor: '', specialColor: '', paperName: '', processingDetails: '' });
     onChange({ ...data, bookletJobs: newJobs });
   };
-
   const removeBookletPart = (jobIndex: number, partIndex: number) => {
     const newJobs = [...data.bookletJobs];
     if (newJobs[jobIndex].parts.length <= 1) return;
@@ -121,21 +84,13 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     onChange({ ...data, bookletJobs: newJobs });
   };
 
-  // --- 通用存取邏輯 ---
+  // --- 存取邏輯 ---
   const updateCustomerDatabase = (newData: QuotationData) => {
     if (!newData.customerName) return;
-    const newCustomer: Customer = {
-      name: newData.customerName,
-      contactPerson: newData.contactPerson,
-      phone: newData.phone,
-      mobile: newData.mobile,
-      fax: newData.fax,
-      deliveryLocation: newData.deliveryLocation
-    };
-    const existingIndex = customers.findIndex(c => c.name === newCustomer.name);
-    let newCustomers = [...customers];
-    if (existingIndex >= 0) newCustomers[existingIndex] = newCustomer;
-    else newCustomers = [newCustomer, ...customers];
+    const newCustomer: Customer = { name: newData.customerName, contactPerson: newData.contactPerson, phone: newData.phone, mobile: newData.mobile, fax: newData.fax, deliveryLocation: newData.deliveryLocation };
+    const newCustomers = [...customers];
+    const idx = newCustomers.findIndex(c => c.name === newCustomer.name);
+    if (idx >= 0) newCustomers[idx] = newCustomer; else newCustomers.unshift(newCustomer);
     setCustomers(newCustomers);
     localStorage.setItem('customerDatabase', JSON.stringify(newCustomers));
   };
@@ -143,104 +98,61 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   const handleExport = () => {
     const customer = data.customerName || '未命名客戶';
     const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
-    const fileName = `報價資料_${customer}_${firstJob || '報價單'}.json`;
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    link.click();
+    link.href = url; link.download = `報價資料_${customer}_${firstJob || '報價單'}.json`; link.click();
     URL.revokeObjectURL(url);
   };
 
-  // 驗證百貨類是否輸入總公司量
   const validateDeptData = () => {
-    if (data.quotationType === 'dept') {
-      const missingHQ = data.bookletJobs.some(job => !job.hqQuantity || job.hqQuantity.trim() === '');
-      if (missingHQ) {
-        alert('百貨類報價必須輸入「總公司量」，請填寫後再繼續。');
-        return false;
-      }
+    if (data.quotationType === 'dept' && data.bookletJobs.some(j => !j.hqQuantity || !j.hqQuantity.trim())) {
+      alert('百貨類報價必須輸入「總公司量」，請填寫後再繼續。');
+      return false;
     }
     return true;
   };
 
   const saveToHistory = () => {
     if (!validateDeptData()) return;
-
     const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
-    if (!data.customerName && !firstJob) {
-      alert('請至少輸入客戶名稱或印件名稱再儲存');
-      return;
-    }
-    const newSaved: SavedQuotation = {
-      id: generateId(),
-      timestamp: new Date().toLocaleString(),
-      title: `${data.customerName || '未命名客戶'} - ${firstJob || '未命名印件'}`,
-      data: { ...data }
-    };
+    if (!data.customerName && !firstJob) { alert('請至少輸入客戶名稱或印件名稱再儲存'); return; }
+    const newSaved: SavedQuotation = { id: generateId(), timestamp: new Date().toLocaleString(), title: `${data.customerName || '未命名客戶'} - ${firstJob || '未命名印件'}`, data: { ...data } };
     const newHistory = [newSaved, ...history].slice(0, 20);
-    setHistory(newHistory);
-    localStorage.setItem('quotationHistory', JSON.stringify(newHistory));
-    updateCustomerDatabase(data);
-    handleExport();
+    setHistory(newHistory); localStorage.setItem('quotationHistory', JSON.stringify(newHistory));
+    updateCustomerDatabase(data); handleExport();
     alert('儲存成功！(已儲存客戶資料、歷史紀錄並下載備份)');
   };
 
-  const handlePrint = () => {
-    if (!validateDeptData()) return;
-    window.print();
-  };
-
   const selectCustomer = (c: Customer) => {
-    onChange({
-      ...data,
-      customerName: c.name,
-      contactPerson: c.contactPerson,
-      phone: c.phone,
-      mobile: c.mobile,
-      fax: c.fax,
-      deliveryLocation: c.deliveryLocation
-    });
+    onChange({ ...data, customerName: c.name, contactPerson: c.contactPerson, phone: c.phone, mobile: c.mobile, fax: c.fax, deliveryLocation: c.deliveryLocation });
     setShowCustomerList(false);
   };
 
   const loadHistory = (saved: SavedQuotation) => {
-    if (confirm(`確定要載入「${saved.title}」嗎？這會覆蓋目前輸入的內容。`)) {
-      onChange(saved.data);
-      setShowHistory(false);
-    }
+    if (confirm(`確定要載入「${saved.title}」嗎？這會覆蓋目前輸入的內容。`)) { onChange(saved.data); setShowHistory(false); }
   };
 
   const deleteHistory = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (confirm('確定要刪除這筆紀錄嗎？')) {
       const newHistory = history.filter(item => item.id !== id);
-      setHistory(newHistory);
-      localStorage.setItem('quotationHistory', JSON.stringify(newHistory));
+      setHistory(newHistory); localStorage.setItem('quotationHistory', JSON.stringify(newHistory));
     }
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         const importedData = JSON.parse(event.target?.result as string);
-        if (importedData) {
-          onChange(importedData);
-          alert('匯入成功！');
-        }
+        if (importedData) { onChange(importedData); alert('匯入成功！'); }
       } catch (err) { alert('解析失敗'); }
       e.target.value = '';
     };
     reader.readAsText(file);
   };
-
-  const filteredCustomers = customers.filter(c => 
-    c.name.toLowerCase().includes(data.customerName.toLowerCase())
-  );
 
   return (
     <div className="form-container no-print">
@@ -260,10 +172,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
             <div className="history-list">
               {history.map(item => (
                 <div key={item.id} className="history-item" onClick={() => loadHistory(item)}>
-                  <div className="history-info">
-                    <div className="history-title">{item.title}</div>
-                    <div className="history-time">{item.timestamp}</div>
-                  </div>
+                  <div className="history-info"><div className="history-title">{item.title}</div><div className="history-time">{item.timestamp}</div></div>
                   <button className="delete-history-btn" onClick={(e) => deleteHistory(e, item.id)}>刪除</button>
                 </div>
               ))}
@@ -281,13 +190,10 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
       <div className="form-group" style={{ position: 'relative' }}>
         <label>客戶名稱</label>
         <input type="text" name="customerName" value={data.customerName} onChange={handleChange} onFocus={() => customers.length > 0 && setShowCustomerList(true)} autoComplete="off" />
-        {showCustomerList && filteredCustomers.length > 0 && (
+        {showCustomerList && customers.filter(c => c.name.toLowerCase().includes(data.customerName.toLowerCase())).length > 0 && (
           <div className="customer-dropdown" ref={customerListRef}>
-            {filteredCustomers.map((c, idx) => (
-              <div key={idx} className="customer-option" onClick={() => selectCustomer(c)}>
-                <div className="c-name">{c.name}</div>
-                <div className="c-info">{c.contactPerson} | {c.phone}</div>
-              </div>
+            {customers.filter(c => c.name.toLowerCase().includes(data.customerName.toLowerCase())).map((c, idx) => (
+              <div key={idx} className="customer-option" onClick={() => selectCustomer(c)}><div className="c-name">{c.name}</div><div className="c-info">{c.contactPerson} | {c.phone}</div></div>
             ))}
           </div>
         )}
@@ -301,101 +207,12 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
         <div className="form-group"><label>行動電話</label><input type="text" name="mobile" value={data.mobile} onChange={handleChange} /></div>
         <div className="form-group"><label>傳真</label><input type="text" name="fax" value={data.fax} onChange={handleChange} /></div>
       </div>
-      <div className="form-row">
-        <div className="form-group">
-          <label>訂印日期</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <input type="text" name="orderYear" value={data.orderYear} onChange={handleChange} style={{ width: '40px' }} /><span>/</span>
-            <input type="text" name="orderMonth" value={data.orderMonth} onChange={handleChange} style={{ width: '30px' }} /><span>/</span>
-            <input type="text" name="orderDay" value={data.orderDay} onChange={handleChange} style={{ width: '30px' }} />
-          </div>
-        </div>
-        <div className="form-group">
-          <label>交貨日期</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <input type="text" name="deliveryYear" value={data.deliveryYear} onChange={handleChange} style={{ width: '40px' }} /><span>/</span>
-            <input type="text" name="deliveryMonth" value={data.deliveryMonth} onChange={handleChange} style={{ width: '30px' }} /><span>/</span>
-            <input type="text" name="deliveryDay" value={data.deliveryDay} onChange={handleChange} style={{ width: '30px' }} />
-          </div>
-        </div>
-      </div>
 
-      <div className="section-title">{data.quotationType === 'single' ? '印件品項' : '冊子印件資訊'}</div>
-      
-      {/* 渲染單張類品項 */}
-      {data.quotationType === 'single' && data.items.map((item, index) => (
-        <div key={item.id} className="item-form-box">
-          <div className="item-header"><span>項目 {index + 1}</span>{data.items.length > 1 && <button className="remove-btn" onClick={() => removeItem(index)}>刪除</button>}</div>
-          <div className="form-group"><label>印件名稱</label><input type="text" name="jobName" value={item.jobName} onChange={(e) => handleItemChange(index, e)} /></div>
-          <div className="form-row">
-            <div className="form-group"><label>開數</label><input type="text" name="sheetSize" value={item.sheetSize} onChange={(e) => handleItemChange(index, e)} /></div>
-            <div className="form-group"><label>印色</label><input type="text" name="printColor" value={item.printColor} onChange={(e) => handleItemChange(index, e)} /></div>
-          </div>
-          <div className="form-group"><label>用紙名稱</label><input type="text" name="paperName" value={item.paperName} onChange={(e) => handleItemChange(index, e)} /></div>
-          <div className="form-group"><label>加工內容</label><textarea name="processingDetails" value={item.processingDetails} onChange={(e) => handleItemChange(index, e)} rows={2} /></div>
-          <div className="form-row">
-            <div className="form-group"><label>數量</label><div style={{ display: 'flex', gap: '0.5rem' }}><input type="text" name="quantity" value={item.quantity} onChange={(e) => handleItemChange(index, e)} style={{ flex: 1 }} /><select name="unit" value={item.unit} onChange={(e) => handleItemChange(index, e)} style={{ padding: '0.6rem', borderRadius: '4px', border: '1px solid #ccc' }}><option value="份">份</option><option value="張">張</option><option value="本">本</option><option value="個">個</option></select></div></div>
-            <div className="form-group"><label>單價</label><input type="text" name="unitPrice" value={item.unitPrice} onChange={(e) => handleItemChange(index, e)} /></div>
-          </div>
-        </div>
-      ))}
-      {data.quotationType === 'single' && <button className="add-btn" onClick={addItem}>+ 新增品項</button>}
-
-      {/* 渲染冊子/百貨類品項 */}
-      {(data.quotationType === 'booklet' || data.quotationType === 'dept') && data.bookletJobs.map((job, jobIndex) => (
-        <div key={job.id} className="booklet-job-box" style={{ background: '#fff', border: '1px solid #ddd', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
-          <div className="form-group"><label>冊子名稱</label><input type="text" name="jobName" value={job.jobName} onChange={(e) => handleBookletJobChange(jobIndex, e)} /></div>
-          <div className="form-row">
-            <div className="form-group"><label>開數</label><input type="text" name="jobSheetSize" value={job.jobSheetSize} onChange={(e) => handleBookletJobChange(jobIndex, e)} placeholder="整本開數" /></div>
-            <div className="form-group"><label>裝訂方法</label><input type="text" name="bindingMethod" value={job.bindingMethod} onChange={(e) => handleBookletJobChange(jobIndex, e)} placeholder="例如：無線膠裝" /></div>
-          </div>
-          <div className="form-row">
-            <div className="form-group"><label>總數量</label><div style={{ display: 'flex', gap: '0.5rem' }}><input type="text" name="quantity" value={job.quantity} onChange={(e) => handleBookletJobChange(jobIndex, e)} style={{ flex: 1 }} /><select name="unit" value={job.unit} onChange={(e) => handleBookletJobChange(jobIndex, e)} style={{ padding: '0.6rem', borderRadius: '4px', border: '1px solid #ccc' }}><option value="本">本</option><option value="份">份</option></select></div></div>
-            <div className="form-group"><label>每本單價</label><input type="text" name="unitPrice" value={job.unitPrice} onChange={(e) => handleBookletJobChange(jobIndex, e)} /></div>
-          </div>
-          {data.quotationType === 'dept' && (
-            <div className="form-group">
-              <label style={{ color: '#d32f2f', fontWeight: 'bold' }}>總公司量 (必填)</label>
-              <input type="text" name="hqQuantity" value={job.hqQuantity} onChange={(e) => handleBookletJobChange(jobIndex, e)} placeholder="請輸入總公司量資訊" style={{ borderColor: !job.hqQuantity ? '#d32f2f' : '#ccc' }} />
-            </div>
-          )}
-          
-          <div className="parts-list" style={{ marginTop: '1rem' }}>
-            {job.parts.map((part, partIndex) => (
-              <div key={part.id} className="part-item-box" style={{ borderLeft: '4px solid #646cff', paddingLeft: '1rem', marginBottom: '1rem', background: '#fcfcff', padding: '0.5rem' }}>
-                <div className="item-header" style={{ marginBottom: '0.5rem' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <span>結構：</span>
-                    {partIndex === 1 ? (
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <select name="partName" value={part.partName} onChange={(e) => handleBookletPartChange(jobIndex, partIndex, e)}>
-                          <option value="扉頁">扉頁</option><option value="蝴蝶頁">蝴蝶頁</option><option value="自訂">自訂</option>
-                        </select>
-                        {part.partName === '自訂' && <input type="text" placeholder="輸入名稱" onChange={(e) => {
-                          const val = e.target.value;
-                          const newJobs = [...data.bookletJobs];
-                          newJobs[jobIndex].parts[partIndex].partName = val;
-                          onChange({ ...data, bookletJobs: newJobs });
-                        }} />}
-                      </div>
-                    ) : (
-                      <input type="text" name="partName" value={part.partName} onChange={(e) => handleBookletPartChange(jobIndex, partIndex, e)} style={{ width: '100px' }} />
-                    )}
-                  </div>
-                  {job.parts.length > 1 && <button className="remove-btn" onClick={() => removeBookletPart(jobIndex, partIndex)}>刪除部分</button>}
-                </div>
-                <div className="form-row">
-                  <div className="form-group"><label>開數</label><input type="text" name="sheetSize" value={part.sheetSize} onChange={(e) => handleBookletPartChange(jobIndex, partIndex, e)} /></div>
-                  <div className="form-group"><label>印色</label><input type="text" name="printColor" value={part.printColor} onChange={(e) => handleBookletPartChange(jobIndex, partIndex, e)} /></div>
-                </div>
-                <div className="form-group"><label>用紙名稱</label><input type="text" name="paperName" value={part.paperName} onChange={(e) => handleBookletPartChange(jobIndex, partIndex, e)} /></div>
-                <div className="form-group"><label>加工內容 (含頁數)</label><textarea name="processingDetails" value={part.processingDetails} onChange={(e) => handleBookletPartChange(jobIndex, partIndex, e)} rows={2} /></div>
-              </div>
-            ))}
-            <button className="add-btn" onClick={() => addBookletPart(jobIndex)}>+ 新增品項</button>
-          </div>
-        </div>
-      ))}
+      {data.quotationType === 'single' ? (
+        <SingleSheetForm items={data.items} onChange={handleItemChange} onAdd={addItem} onRemove={removeItem} />
+      ) : (
+        <BookletForm jobs={data.bookletJobs} isDept={data.quotationType === 'dept'} onJobChange={handleBookletJobChange} onPartChange={handleBookletPartChange} onAddPart={addBookletPart} onRemovePart={removeBookletPart} />
+      )}
 
       <div className="section-title">其他條款</div>
       <div className="form-group"><label>其他備註</label><textarea name="remarks" value={data.remarks} onChange={handleChange} rows={2} /></div>
@@ -406,7 +223,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
 
       <div className="action-buttons">
         <button className="save-btn" onClick={saveToHistory}>儲存此報價單</button>
-        <button className="print-button" onClick={handlePrint}>列印報價單 (PDF)</button>
+        <button className="print-button" onClick={() => { if(validateDeptData()) window.print(); }}>列印報價單 (PDF)</button>
       </div>
     </div>
   );

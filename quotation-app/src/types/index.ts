@@ -12,6 +12,7 @@ export interface QuotationItem {
   jobName: string;
   sheetSize: string;
   printColor: string;
+  specialColor: string;
   paperName: string;
   processingDetails: string;
   quantity: string;
@@ -25,6 +26,7 @@ export interface BookletPart {
   partName: string; // 封面、扉頁等
   sheetSize: string;
   printColor: string;
+  specialColor: string;
   paperName: string;
   processingDetails: string;
 }

@@ -75,8 +75,6 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
         <div className="meta-item"><span className="label">行動電話：</span><span className="value">{data.mobile}</span></div>
         <div className="meta-item"><span className="label">傳真：</span><span className="value">{data.fax}</span></div>
         <div className="meta-item"><span className="label">日期：</span><span className="value">{year} 年 {month} 月 {day} 日</span></div>
-        <div className="meta-item"><span className="label">訂印日期：</span><span className="value">{data.orderYear || '   '} 年 {data.orderMonth || '  '} 月 {data.orderDay || '  '} 日</span></div>
-        <div className="meta-item"><span className="label">交貨日期：</span><span className="value">{data.deliveryYear || '   '} 年 {data.deliveryMonth || '  '} 月 {data.deliveryDay || '  '} 日</span></div>
       </div>
       
       <table className="quotation-table-main">
@@ -100,7 +98,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
               <tr key={item.id}>
                 <td>{item.jobName}</td>
                 <td>{item.sheetSize}</td>
-                <td>{item.printColor}</td>
+                <td>{item.printColor} {item.specialColor ? `(${item.specialColor})` : ''}</td>
                 <td>{item.paperName}</td>
                 <td className="multi-line">{item.processingDetails}</td>
                 <td className="text-center">{item.quantity}{item.unit}</td>
@@ -134,7 +132,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   <tr key={part.id}>
                     <td className="text-right" style={{ paddingRight: '10pt' }}>{part.partName}</td>
                     <td>{part.sheetSize}</td>
-                    <td>{part.printColor}</td>
+                    <td>{part.printColor} {part.specialColor ? `(${part.specialColor})` : ''}</td>
                     <td>{part.paperName}</td>
                     <td className="multi-line">{part.processingDetails}</td>
                   </tr>

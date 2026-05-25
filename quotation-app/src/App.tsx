@@ -21,6 +21,7 @@ function App() {
     jobName: '',
     sheetSize: '',
     printColor: '',
+    specialColor: '',
     paperName: '',
     processingDetails: '',
     quantity: '',
@@ -33,6 +34,7 @@ function App() {
     partName: name,
     sheetSize: '',
     printColor: '',
+    specialColor: '',
     paperName: '',
     processingDetails: '',
   });
