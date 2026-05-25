@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import './styles/Form.css'
 import './styles/Preview.css'
 import QuotationForm from './components/QuotationForm'
 import QuotationPreview from './components/QuotationPreview'
 import Dashboard from './components/Dashboard'
-import type { QuotationData, QuotationItem } from './types'
+import type { QuotationData, QuotationItem, BookletJob, BookletPart } from './types'
 
 type ViewMode = 'dashboard' | 'single' | 'booklet' | 'dept';
 
@@ -28,13 +28,38 @@ function App() {
     unitPrice: '',
   });
 
-  const getInitialData = (): QuotationData => ({
+  const createEmptyBookletPart = (name: string): BookletPart => ({
+    id: generateId(),
+    partName: name,
+    sheetSize: '',
+    printColor: '',
+    paperName: '',
+    processingDetails: '',
+  });
+
+  const createEmptyBookletJob = (): BookletJob => ({
+    id: generateId(),
+    jobName: '',
+    bindingMethod: '',
+    quantity: '',
+    unit: '本',
+    unitPrice: '',
+    parts: [
+      createEmptyBookletPart('封面'),
+      createEmptyBookletPart('扉頁'),
+      createEmptyBookletPart('內頁'),
+    ],
+  });
+
+  const getInitialData = (type: 'single' | 'booklet' | 'dept' = 'single'): QuotationData => ({
+    quotationType: type,
     customerName: '',
     contactPerson: '',
     phone: '',
     mobile: '',
     fax: '',
-    items: [createEmptyItem()],
+    items: type === 'single' ? [createEmptyItem()] : [],
+    bookletJobs: type === 'booklet' ? [createEmptyBookletJob()] : [],
     remarks: '',
     orderYear: '',
     orderMonth: '',
@@ -50,9 +75,16 @@ function App() {
 
   const [quotationData, setQuotationData] = useState<QuotationData>(getInitialData());
 
+  // 當視圖切換時，如果類型不符則重置資料結構
+  useEffect(() => {
+    if (view !== 'dashboard' && view !== quotationData.quotationType) {
+      setQuotationData(getInitialData(view as any));
+    }
+  }, [view]);
+
   const handleReset = () => {
     if (confirm('確定要清空所有內容嗎？')) {
-      setQuotationData(getInitialData());
+      setQuotationData(getInitialData(view === 'dashboard' ? 'single' : (view as any)));
     }
   };
 
@@ -62,7 +94,6 @@ function App() {
     localStorage.setItem('lastSalesMobile', mobile);
   };
 
-  // 返回主選單
   const backToDashboard = () => setView('dashboard');
 
   return (

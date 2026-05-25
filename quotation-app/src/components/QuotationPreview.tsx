@@ -12,25 +12,44 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
   const day = today.getDate();
   const dateStr = `${year}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}`;
 
-  // 當資料變更時，自動更新網頁標題（這會成為預設的 PDF 檔名）
+  // 當資料變更時，自動更新網頁標題
   React.useEffect(() => {
     const customer = data.customerName || '未命名客戶';
-    const job = data.items[0]?.jobName || '報價單';
-    document.title = `捷采報價單_${customer}_${job}_${dateStr}`;
+    const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
+    document.title = `捷采報價單_${customer}_${firstJob || '報價單'}_${dateStr}`;
   }, [data, dateStr]);
 
-  // 計算所有品項的總計
-  const subtotal = data.items.reduce((sum, item) => {
-    const qty = parseFloat(item.quantity) || 0;
-    const price = parseFloat(item.unitPrice) || 0;
-    return sum + Math.round(qty * price);
-  }, 0);
+  // 計算總計
+  let subtotal = 0;
+  if (data.quotationType === 'single') {
+    subtotal = data.items.reduce((sum, item) => {
+      const qty = parseFloat(item.quantity) || 0;
+      const price = parseFloat(item.unitPrice) || 0;
+      return sum + Math.round(qty * price);
+    }, 0);
+  } else if (data.quotationType === 'booklet') {
+    subtotal = data.bookletJobs.reduce((sum, job) => {
+      const qty = parseFloat(job.quantity) || 0;
+      const price = parseFloat(job.unitPrice) || 0;
+      return sum + Math.round(qty * price);
+    }, 0);
+  }
   
   const tax = Math.round(subtotal * 0.05);
   const total = subtotal + tax;
 
   const formatNumber = (num: number) => {
     return num > 0 ? num.toLocaleString() : '';
+  };
+
+  // 計算目前顯示的總列數，用來補足 7 列
+  const getCurrentRowCount = () => {
+    if (data.quotationType === 'single') return data.items.length;
+    if (data.quotationType === 'booklet') {
+      // 每個 Job 佔 1 行(標題) + N 行(Part)
+      return data.bookletJobs.reduce((count, job) => count + 1 + job.parts.length, 0);
+    }
+    return 0;
   };
 
   return (
@@ -41,50 +60,20 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
           <p>總公司:台中市西屯區工業區31路1-1號 TEL:04-23580040  FAX:04-23580042</p>
           <p>台北分公司:新北市永和區保生路1號17樓 TEL:02-25792911  FAX:02-25792771</p>
           <p>台南分公司:台南市南區大成路二段10號 TEL:06-2613176  FAX:06-2613176</p>
-          <p>高雄分公司:高雄市三民區克武路139號 TEL:07-3852219  FAX:07-3962480</p>
+          <p>高雄分公司:高雄市三min區克武路139號 TEL:07-3852219  FAX:07-3962480</p>
         </div>
         <h2 className="main-title">報 價 單</h2>
       </div>
 
       <div className="quotation-meta-grid">
-        <div className="meta-item">
-          <span className="label">客戶名稱：</span>
-          <span className="value">{data.customerName}</span>
-        </div>
-        <div className="meta-item">
-          <span className="label">聯絡人：</span>
-          <span className="value">{data.contactPerson}</span>
-        </div>
-        <div className="meta-item">
-          <span className="label">電話：</span>
-          <span className="value">{data.phone}</span>
-        </div>
-        <div className="meta-item">
-          <span className="label">行動電話：</span>
-          <span className="value">{data.mobile}</span>
-        </div>
-        <div className="meta-item">
-          <span className="label">傳真：</span>
-          <span className="value">{data.fax}</span>
-        </div>
-        <div className="meta-item">
-          <span className="label">日期：</span>
-          <span className="value">
-            {year} 年 {month} 月 {day} 日
-          </span>
-        </div>
-        <div className="meta-item">
-          <span className="label">訂印日期：</span>
-          <span className="value">
-            {data.orderYear || '   '} 年 {data.orderMonth || '  '} 月 {data.orderDay || '  '} 日
-          </span>
-        </div>
-        <div className="meta-item">
-          <span className="label">交貨日期：</span>
-          <span className="value">
-            {data.deliveryYear || '   '} 年 {data.deliveryMonth || '  '} 月 {data.deliveryDay || '  '} 日
-          </span>
-        </div>
+        <div className="meta-item"><span className="label">客戶名稱：</span><span className="value">{data.customerName}</span></div>
+        <div className="meta-item"><span className="label">聯絡人：</span><span className="value">{data.contactPerson}</span></div>
+        <div className="meta-item"><span className="label">電話：</span><span className="value">{data.phone}</span></div>
+        <div className="meta-item"><span className="label">行動電話：</span><span className="value">{data.mobile}</span></div>
+        <div className="meta-item"><span className="label">傳真：</span><span className="value">{data.fax}</span></div>
+        <div className="meta-item"><span className="label">日期：</span><span className="value">{year} 年 {month} 月 {day} 日</span></div>
+        <div className="meta-item"><span className="label">訂印日期：</span><span className="value">{data.orderYear || '   '} 年 {data.orderMonth || '  '} 月 {data.orderDay || '  '} 日</span></div>
+        <div className="meta-item"><span className="label">交貨日期：</span><span className="value">{data.deliveryYear || '   '} 年 {data.deliveryMonth || '  '} 月 {data.deliveryDay || '  '} 日</span></div>
       </div>
       
       <table className="quotation-table-main">
@@ -101,11 +90,9 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
           </tr>
         </thead>
         <tbody>
-          {data.items.map((item) => {
-            const qty = parseFloat(item.quantity) || 0;
-            const price = parseFloat(item.unitPrice) || 0;
-            const amount = Math.round(qty * price);
-            
+          {/* 單張類渲染 */}
+          {data.quotationType === 'single' && data.items.map((item) => {
+            const amount = Math.round((parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0));
             return (
               <tr key={item.id}>
                 <td>{item.jobName}</td>
@@ -114,31 +101,60 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                 <td>{item.paperName}</td>
                 <td className="multi-line">{item.processingDetails}</td>
                 <td className="text-center">{item.quantity}{item.unit}</td>
-                <td className="text-right">{formatNumber(price)}</td>
+                <td className="text-right">{formatNumber(parseFloat(item.unitPrice) || 0)}</td>
                 <td className="text-right">{formatNumber(amount)}</td>
               </tr>
             );
           })}
-          {/* 填充空白列直到滿 7 列 */}
-          {Array.from({ length: Math.max(0, 7 - data.items.length) }).map((_, index) => (
+
+          {/* 冊子類渲染 */}
+          {data.quotationType === 'booklet' && data.bookletJobs.map((job) => {
+            const amount = Math.round((parseFloat(job.quantity) || 0) * (parseFloat(job.unitPrice) || 0));
+            const totalRowsForJob = 1 + job.parts.length;
+            
+            return (
+              <React.Fragment key={job.id}>
+                {/* 第一列：總摘要 */}
+                <tr>
+                  <td style={{ fontWeight: 'bold' }}>{job.jobName}</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>{job.bindingMethod}</td>
+                  <td rowSpan={totalRowsForJob} className="text-center">{job.quantity}{job.unit}</td>
+                  <td rowSpan={totalRowsForJob} className="text-right">{formatNumber(parseFloat(job.unitPrice) || 0)}</td>
+                  <td rowSpan={totalRowsForJob} className="text-right">{formatNumber(amount)}</td>
+                </tr>
+                {/* 後續列：詳細結構部分 */}
+                {job.parts.map((part) => (
+                  <tr key={part.id}>
+                    <td className="text-right" style={{ paddingRight: '10pt' }}>{part.partName}</td>
+                    <td>{part.sheetSize}</td>
+                    <td>{part.printColor}</td>
+                    <td>{part.paperName}</td>
+                    <td className="multi-line">{part.processingDetails}</td>
+                    {/* 數量、單價、金額已被 rowSpan 合併 */}
+                  </tr>
+                ))}
+              </React.Fragment>
+            );
+          })}
+
+          {/* 填充空白列 */}
+          {Array.from({ length: Math.max(0, 7 - getCurrentRowCount()) }).map((_, index) => (
             <tr key={`empty-${index}`}>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
-              <td>&nbsp;</td>
+              <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
             </tr>
           ))}
-          {/* 其他備註列：顯示在合計上方 */}
+
+          {/* 備註列 */}
           {data.remarks && (
             <tr>
               <td colSpan={1} style={{ backgroundColor: '#f9f9f9', fontWeight: 'bold', textAlign: 'center' }}>備註</td>
               <td colSpan={7} className="multi-line">{data.remarks}</td>
             </tr>
           )}
+
           <tr className="total-row">
             <td colSpan={5}>合計 (未稅)</td>
             <td colSpan={3} className="text-right">{formatNumber(subtotal)}</td>
@@ -156,20 +172,12 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
 
       <div className="quotation-terms-grid">
         <div className="term-row">
-          <div className="term-item">
-            印訂日期：{data.orderYear || '      '} 年 {data.orderMonth || '   '} 月 {data.orderDay || '   '} 日
-          </div>
-          <div className="term-item">
-            付款辦法：{data.paymentMethod}
-          </div>
+          <div className="term-item">印訂日期：{data.orderYear || '      '} 年 {data.orderMonth || '   '} 月 {data.orderDay || '   '} 日</div>
+          <div className="term-item">付款辦法：{data.paymentMethod}</div>
         </div>
         <div className="term-row">
-          <div className="term-item">
-            交貨日期：{data.deliveryYear || '      '} 年 {data.deliveryMonth || '   '} 月 {data.deliveryDay || '   '} 日
-          </div>
-          <div className="term-item">
-            交貨地點：{data.deliveryLocation}
-          </div>
+          <div className="term-item">交貨日期：{data.deliveryYear || '      '} 年 {data.deliveryMonth || '   '} 月 {data.deliveryDay || '   '} 日</div>
+          <div className="term-item">交貨地點：{data.deliveryLocation}</div>
         </div>
       </div>
 
@@ -184,7 +192,6 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
             <li>本印件依一般印刷慣例製作，如有涉訟，雙方同意以台中地方法院為管轄法院。</li>
           </ol>
         </div>
-        
         <div className="contract-section">
           <p className="contract-title">立合約書人</p>
           <div className="contract-grid">
@@ -196,20 +203,10 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
               <p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：04-23580040 &nbsp;&nbsp; 傳真：04-23580042</p>
               <p>業務代表：{data.salesName} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 行動電話：{data.salesMobile}</p>
             </div>
-            <div className="contract-party">
-              <p>乙&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：</p>
-              <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p>
-              <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：</p>
-              <p>統一編號：</p>
-              <p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 傳真：</p>
-            </div>
+            <div className="contract-party"><p>乙&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：</p><p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p><p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：</p><p>統一編號：</p><p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 傳真：</p></div>
           </div>
         </div>
-
-        <div className="doc-footer">
-          <span>JT-QRP-S01-01A1</span>
-          <span>保存年限：2年</span>
-        </div>
+        <div className="doc-footer"><span>JT-QRP-S01-01A1</span><span>保存年限：2年</span></div>
       </div>
     </div>
   );
