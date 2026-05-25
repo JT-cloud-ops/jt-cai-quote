@@ -40,6 +40,7 @@ function App() {
   const createEmptyBookletJob = (): BookletJob => ({
     id: generateId(),
     jobName: '',
+    jobSheetSize: '',
     bindingMethod: '',
     quantity: '',
     unit: '本',

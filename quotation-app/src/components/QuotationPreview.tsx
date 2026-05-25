@@ -117,7 +117,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                 {/* 第一列：總摘要 */}
                 <tr>
                   <td style={{ fontWeight: 'bold' }}>{job.jobName}</td>
-                  <td>&nbsp;</td>
+                  <td>{job.jobSheetSize}</td>
                   <td>&nbsp;</td>
                   <td>&nbsp;</td>
                   <td>{job.bindingMethod}</td>

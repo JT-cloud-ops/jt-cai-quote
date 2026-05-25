@@ -33,6 +33,7 @@ export interface BookletPart {
 export interface BookletJob {
   id: string;
   jobName: string; // 冊子總名稱
+  jobSheetSize: string; // 冊子開數
   bindingMethod: string; // 裝訂方法
   quantity: string;
   unit: string;

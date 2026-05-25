@@ -326,7 +326,10 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
       {data.quotationType === 'booklet' && data.bookletJobs.map((job, jobIndex) => (
         <div key={job.id} className="booklet-job-box" style={{ background: '#fff', border: '1px solid #ddd', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
           <div className="form-group"><label>冊子名稱</label><input type="text" name="jobName" value={job.jobName} onChange={(e) => handleBookletJobChange(jobIndex, e)} /></div>
-          <div className="form-group"><label>裝訂方法</label><input type="text" name="bindingMethod" value={job.bindingMethod} onChange={(e) => handleBookletJobChange(jobIndex, e)} placeholder="例如：無線膠裝、騎馬釘" /></div>
+          <div className="form-row">
+            <div className="form-group"><label>開數</label><input type="text" name="jobSheetSize" value={job.jobSheetSize} onChange={(e) => handleBookletJobChange(jobIndex, e)} placeholder="整本開數" /></div>
+            <div className="form-group"><label>裝訂方法</label><input type="text" name="bindingMethod" value={job.bindingMethod} onChange={(e) => handleBookletJobChange(jobIndex, e)} placeholder="例如：無線膠裝" /></div>
+          </div>
           <div className="form-row">
             <div className="form-group"><label>總數量</label><div style={{ display: 'flex', gap: '0.5rem' }}><input type="text" name="quantity" value={job.quantity} onChange={(e) => handleBookletJobChange(jobIndex, e)} style={{ flex: 1 }} /><select name="unit" value={job.unit} onChange={(e) => handleBookletJobChange(jobIndex, e)} style={{ padding: '0.6rem', borderRadius: '4px', border: '1px solid #ccc' }}><option value="本">本</option><option value="份">份</option></select></div></div>
             <div className="form-group"><label>每本單價</label><input type="text" name="unitPrice" value={job.unitPrice} onChange={(e) => handleBookletJobChange(jobIndex, e)} /></div>
