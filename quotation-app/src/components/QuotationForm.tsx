@@ -364,7 +364,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
                 <div className="form-group"><label>加工內容 (含頁數)</label><textarea name="processingDetails" value={part.processingDetails} onChange={(e) => handleBookletPartChange(jobIndex, partIndex, e)} rows={2} /></div>
               </div>
             ))}
-            <button className="add-btn" onClick={() => addBookletPart(jobIndex)}>+ 新增結構部分</button>
+            <button className="add-btn" onClick={() => addBookletPart(jobIndex)}>+ 新增品項</button>
           </div>
         </div>
       ))}
