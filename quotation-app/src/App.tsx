@@ -101,7 +101,7 @@ function App() {
   const backToDashboard = () => setView('dashboard');
 
   return (
-    <div className="app-container">
+    <div className="app-wrapper">
       {view === 'dashboard' ? (
         <Dashboard 
           salesName={quotationData.salesName}
@@ -110,7 +110,7 @@ function App() {
           onSelectType={(type) => setView(type)}
         />
       ) : (
-        <>
+        <div className="workspace-container">
           <div className="view-header no-print" style={{ marginBottom: '1rem', textAlign: 'left' }}>
             <button 
               onClick={backToDashboard}
@@ -123,17 +123,19 @@ function App() {
             </span>
           </div>
           
-          <div className="quotation-layout" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+          <div className="app-container quotation-layout">
             <QuotationForm 
               data={quotationData} 
               onChange={setQuotationData} 
               onReset={handleReset}
             />
-            <QuotationPreview 
-              data={quotationData} 
-            />
+            <div className="preview-wrapper" style={{ overflowX: 'auto' }}>
+              <QuotationPreview 
+                data={quotationData} 
+              />
+            </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   )
