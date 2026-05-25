@@ -1,14 +1,19 @@
 /* App specific styles */
-.app-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+.app-wrapper {
   width: 100%;
 }
 
-@media (max-width: 900px) {
-  .app-container {
-    grid-template-columns: 1fr;
+.quotation-layout {
+  display: grid;
+  grid-template-columns: 1fr 21cm; /* 左側表單自適應，右側預覽固定 21cm (A4) */
+  gap: 2rem;
+  width: 100%;
+  align-items: flex-start;
+}
+
+@media (max-width: 1300px) {
+  .quotation-layout {
+    grid-template-columns: 1fr; /* 螢幕不夠寬時改為上下排列 */
   }
 }
 
@@ -16,7 +21,7 @@
   .no-print {
     display: none !important;
   }
-  .app-container {
+  .quotation-layout {
     display: block;
   }
   body {
