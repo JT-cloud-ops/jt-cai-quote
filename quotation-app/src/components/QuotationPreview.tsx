@@ -10,10 +10,22 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
   const year = today.getFullYear() - 1911; // 民國年
   const month = today.getMonth() + 1;
   const day = today.getDate();
+  const dateStr = `${year}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}`;
 
-  const quantity = parseFloat(data.quantity) || 0;
-  const unitPrice = parseFloat(data.unitPrice) || 0;
-  const subtotal = Math.round(quantity * unitPrice);
+  // 當資料變更時，自動更新網頁標題（這會成為預設的 PDF 檔名）
+  React.useEffect(() => {
+    const customer = data.customerName || '未命名客戶';
+    const job = data.items[0]?.jobName || '報價單';
+    document.title = `捷采報價單_${customer}_${job}_${dateStr}`;
+  }, [data, dateStr]);
+
+  // 計算所有品項的總計
+  const subtotal = data.items.reduce((sum, item) => {
+    const qty = parseFloat(item.quantity) || 0;
+    const price = parseFloat(item.unitPrice) || 0;
+    return sum + Math.round(qty * price);
+  }, 0);
+  
   const tax = Math.round(subtotal * 0.05);
   const total = subtotal + tax;
 
@@ -61,6 +73,18 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
             {year} 年 {month} 月 {day} 日
           </span>
         </div>
+        <div className="meta-item">
+          <span className="label">訂印日期：</span>
+          <span className="value">
+            {data.orderYear || '   '} 年 {data.orderMonth || '  '} 月 {data.orderDay || '  '} 日
+          </span>
+        </div>
+        <div className="meta-item">
+          <span className="label">交貨日期：</span>
+          <span className="value">
+            {data.deliveryYear || '   '} 年 {data.deliveryMonth || '  '} 月 {data.deliveryDay || '  '} 日
+          </span>
+        </div>
       </div>
       
       <table className="quotation-table-main">
@@ -77,19 +101,44 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>{data.jobName}</td>
-            <td>{data.sheetSize}</td>
-            <td>{data.printColor}</td>
-            <td>{data.paperName}</td>
-            <td className="multi-line">
-              {data.processingDetails}
-              {data.remarks && `\n${data.remarks}`}
-            </td>
-            <td className="text-center">{data.quantity}</td>
-            <td className="text-right">{formatNumber(unitPrice)}</td>
-            <td className="text-right">{formatNumber(subtotal)}</td>
-          </tr>
+          {data.items.map((item) => {
+            const qty = parseFloat(item.quantity) || 0;
+            const price = parseFloat(item.unitPrice) || 0;
+            const amount = Math.round(qty * price);
+            
+            return (
+              <tr key={item.id}>
+                <td>{item.jobName}</td>
+                <td>{item.sheetSize}</td>
+                <td>{item.printColor}</td>
+                <td>{item.paperName}</td>
+                <td className="multi-line">{item.processingDetails}</td>
+                <td className="text-center">{item.quantity}{item.unit}</td>
+                <td className="text-right">{formatNumber(price)}</td>
+                <td className="text-right">{formatNumber(amount)}</td>
+              </tr>
+            );
+          })}
+          {/* 填充空白列直到滿 7 列 */}
+          {Array.from({ length: Math.max(0, 7 - data.items.length) }).map((_, index) => (
+            <tr key={`empty-${index}`}>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+            </tr>
+          ))}
+          {/* 其他備註列：顯示在合計上方 */}
+          {data.remarks && (
+            <tr>
+              <td colSpan={1} style={{ backgroundColor: '#f9f9f9', fontWeight: 'bold', textAlign: 'center' }}>備註</td>
+              <td colSpan={7} className="multi-line">{data.remarks}</td>
+            </tr>
+          )}
           <tr className="total-row">
             <td colSpan={5}>合計 (未稅)</td>
             <td colSpan={3} className="text-right">{formatNumber(subtotal)}</td>
@@ -108,7 +157,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
       <div className="quotation-terms-grid">
         <div className="term-row">
           <div className="term-item">
-            印訂日期：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 年 &nbsp;&nbsp;&nbsp; 月 &nbsp;&nbsp;&nbsp; 日
+            印訂日期：{data.orderYear || '      '} 年 {data.orderMonth || '   '} 月 {data.orderDay || '   '} 日
           </div>
           <div className="term-item">
             付款辦法：{data.paymentMethod}
@@ -116,7 +165,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
         </div>
         <div className="term-row">
           <div className="term-item">
-            交貨日期：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 年 &nbsp;&nbsp;&nbsp; 月 &nbsp;&nbsp;&nbsp; 日
+            交貨日期：{data.deliveryYear || '      '} 年 {data.deliveryMonth || '   '} 月 {data.deliveryDay || '   '} 日
           </div>
           <div className="term-item">
             交貨地點：{data.deliveryLocation}
@@ -145,7 +194,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
               <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：台中工業區31路1之1號</p>
               <p>統一編號：23518409</p>
               <p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：04-23580040 &nbsp;&nbsp; 傳真：04-23580042</p>
-              <p>業務代表：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 行動電話：</p>
+              <p>業務代表：{data.salesName} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 行動電話：{data.salesMobile}</p>
             </div>
             <div className="contract-party">
               <p>乙&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：</p>
