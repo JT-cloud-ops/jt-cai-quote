@@ -128,15 +128,18 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   <td rowSpan={totalRowsForJob} className="text-right">{formatNumber(amount)}</td>
                 </tr>
                 {/* 後續列：詳細結構部分 */}
-                {job.parts.map((part) => (
-                  <tr key={part.id}>
-                    <td className="text-right" style={{ paddingRight: '10pt' }}>{part.partName}</td>
-                    <td>{part.sheetSize}</td>
-                    <td>{part.printColor} {part.specialColor ? `(${part.specialColor})` : ''}</td>
-                    <td>{part.paperName}</td>
-                    <td className="multi-line">{part.processingDetails}</td>
-                  </tr>
-                ))}
+                {job.parts.map((part) => {
+                  const hasData = [part.sheetSize, part.printColor, part.specialColor, part.paperName, part.processingDetails].some(val => val && val.trim() !== '');
+                  return (
+                    <tr key={part.id}>
+                      <td className="text-right" style={{ paddingRight: '10pt' }}>{hasData ? part.partName : '\u00A0'}</td>
+                      <td>{part.sheetSize}</td>
+                      <td>{part.printColor} {part.specialColor ? `(${part.specialColor})` : ''}</td>
+                      <td>{part.paperName}</td>
+                      <td className="multi-line">{part.processingDetails}</td>
+                    </tr>
+                  );
+                })}
                 {/* 百貨類專用：總公司量列 */}
                 {hasHQ && (
                   <tr>
