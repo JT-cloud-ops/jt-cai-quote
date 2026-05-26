@@ -150,16 +150,3 @@ function App() {
 }
 
 export default App
-: 'auto' }}>
-              <QuotationPreview 
-                data={quotationData} 
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-export default App

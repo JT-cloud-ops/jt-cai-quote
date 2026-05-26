@@ -105,7 +105,11 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     URL.revokeObjectURL(url);
   };
 
-  const validateDeptData = () => {
+  const validateForm = () => {
+    if (!data.customerName || data.customerName.trim().length < 4) {
+      alert('客戶名稱必須至少輸入 4 個字。');
+      return false;
+    }
     if (data.quotationType === 'dept' && data.bookletJobs.some(j => !j.hqQuantity || !j.hqQuantity.trim())) {
       alert('百貨類報價必須輸入「總公司量」，請填寫後再繼續。');
       return false;
@@ -114,7 +118,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   };
 
   const saveToHistory = () => {
-    if (!validateDeptData()) return;
+    if (!validateForm()) return;
     const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
     if (!data.customerName && !firstJob) { alert('請至少輸入客戶名稱或印件名稱再儲存'); return; }
     const newSaved: SavedQuotation = { id: generateId(), timestamp: new Date().toLocaleString(), title: `${data.customerName || '未命名客戶'} - ${firstJob || '未命名印件'}`, data: { ...data } };
