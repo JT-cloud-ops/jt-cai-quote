@@ -99,14 +99,21 @@ function App() {
     localStorage.setItem('lastSalesMobile', mobile);
   };
 
+  const handleCompanyChange = (companyId: string) => {
+    setQuotationData(prev => ({ ...prev, companyId }));
+    localStorage.setItem('lastCompanyId', companyId);
+  };
+
   const backToDashboard = () => setView('dashboard');
 
   return (
     <div className="app-wrapper">
       {view === 'dashboard' ? (
         <Dashboard 
+          companyId={quotationData.companyId}
           salesName={quotationData.salesName}
           salesMobile={quotationData.salesMobile}
+          onCompanyChange={handleCompanyChange}
           onSalesChange={handleSalesChange}
           onSelectType={(type) => setView(type)}
         />
