@@ -19,10 +19,10 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
     document.title = `捷采報價單_${customer}_${firstJob || '報價單'}_${dateStr}`;
   }, [data, dateStr]);
 
-  // 計算總計與稅額
-  let subtotal = 0;
-  let tax = 0;
-  let total = 0;
+  // 定義全局加總變數
+  let totalSubtotal = 0; // 未稅合計
+  let totalTax = 0;      // 營業稅合計
+  let grandTotal = 0;    // 含稅總計
 
   if (data.quotationType === 'single') {
     data.items.forEach(item => {
@@ -32,30 +32,33 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
       const itemAmount = item.manualAmount ? (parseFloat(item.manualAmount) || 0) : Math.round(qty * price);
       
       if (item.taxType === 'include') {
-        // 含稅：總計為 itemAmount，回推未稅合計與稅金
+        // 含稅：此金額即為含稅總額
         const itemTotal = itemAmount;
-        const itemSubtotal = Math.round(itemTotal / 1.05);
-        const itemTax = itemTotal - itemSubtotal;
-        subtotal += itemSubtotal;
-        tax += itemTax;
-        total += itemTotal;
+        const itemSub = Math.round(itemTotal / 1.05);
+        const itemTax = itemTotal - itemSub;
+        totalSubtotal += itemSub;
+        totalTax += itemTax;
+        grandTotal += itemTotal;
       } else {
-        // 未稅：直接加總
-        const itemSubtotal = itemAmount;
-        const itemTax = Math.round(itemSubtotal * 0.05);
-        subtotal += itemSubtotal;
-        tax += itemTax;
-        total += (itemSubtotal + itemTax);
+        // 未稅：此金額為未稅底價
+        const itemSub = itemAmount;
+        const itemTax = Math.round(itemSub * 0.05);
+        totalSubtotal += itemSub;
+        totalTax += itemTax;
+        grandTotal += (itemSub + itemTax);
       }
     });
-  } else if (data.quotationType === 'booklet' || data.quotationType === 'dept') {
-    subtotal = data.bookletJobs.reduce((sum, job) => {
+  } else {
+    // 冊子與百貨類：目前預設為未稅計算
+    data.bookletJobs.forEach(job => {
       const qty = parseFloat(job.quantity) || 0;
       const price = parseFloat(job.unitPrice) || 0;
-      return sum + Math.round(qty * price);
-    }, 0);
-    tax = Math.round(subtotal * 0.05);
-    total = subtotal + tax;
+      const itemSub = Math.round(qty * price);
+      const itemTax = Math.round(itemSub * 0.05);
+      totalSubtotal += itemSub;
+      totalTax += itemTax;
+      grandTotal += (itemSub + itemTax);
+    });
   }
 
   const formatNumber = (num: number) => {
@@ -168,18 +171,6 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
     }
   };
 
-  // 判斷整份單據的稅制標籤
-  const getTaxLabel = () => {
-    if (data.quotationType === 'single') {
-      const allInclude = data.items.every(item => item.taxType === 'include');
-      const someInclude = data.items.some(item => item.taxType === 'include');
-      if (allInclude) return '(含稅)';
-      if (someInclude) return '(部分含稅)';
-      return '(未稅)';
-    }
-    return '(未稅)'; // 冊子與百貨類預設為未稅
-  };
-
   return (
     <div className="preview-container">
       <div className="company-header">
@@ -222,13 +213,15 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                 <td>{item.sheetSize}</td>
                 <td>{item.printColor} {item.specialColor ? `(${item.specialColor})` : ''}</td>
                 <td>{item.paperName}</td>
-                <td className="multi-line">
-                  {item.processingDetails}
-                  {item.taxType === 'include' && <div style={{ color: '#666', fontSize: '8pt' }}>(單價含稅)</div>}
-                </td>
+                <td className="multi-line">{item.processingDetails}</td>
                 <td className="text-center">{item.quantity}{item.unit}</td>
                 <td className="text-right">{item.unitPrice ? formatNumber(price) : ''}</td>
-                <td className="text-right">{formatNumber(amount)}</td>
+                <td className="text-right">
+                  {formatNumber(amount)}
+                  <span style={{ fontSize: '8pt', marginLeft: '2pt', display: 'inline-block' }}>
+                    {item.taxType === 'include' ? '(含稅)' : '(未稅)'}
+                  </span>
+                </td>
               </tr>
             );
           })}
@@ -249,7 +242,10 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   <td>{job.bindingMethod}</td>
                   <td rowSpan={totalRowsForJob} className="text-center">{job.quantity}{job.unit}</td>
                   <td rowSpan={totalRowsForJob} className="text-right">{job.unitPrice ? formatNumber(parseFloat(job.unitPrice) || 0) : ''}</td>
-                  <td rowSpan={totalRowsForJob} className="text-right">{formatNumber(amount)}</td>
+                  <td rowSpan={totalRowsForJob} className="text-right">
+                    {formatNumber(amount)}
+                    <span style={{ fontSize: '8pt', marginLeft: '2pt', display: 'inline-block' }}>(未稅)</span>
+                  </td>
                 </tr>
                 {job.parts.map((part) => {
                   const hasData = [part.sheetSize, part.printColor, part.specialColor, part.paperName, part.processingDetails].some(val => val && val.trim() !== '');
@@ -290,16 +286,16 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
           )}
 
           <tr className="total-row">
-            <td colSpan={5}>合計 {getTaxLabel()}</td>
-            <td colSpan={3} className="text-right">{formatNumber(subtotal)}</td>
+            <td colSpan={5}>合計 (未稅)</td>
+            <td colSpan={3} className="text-right">{formatNumber(totalSubtotal)}</td>
           </tr>
           <tr className="total-row">
             <td colSpan={5}>營業稅 (5%)</td>
-            <td colSpan={3} className="text-right">{formatNumber(tax)}</td>
+            <td colSpan={3} className="text-right">{formatNumber(totalTax)}</td>
           </tr>
           <tr className="total-row" style={{ fontSize: '14pt' }}>
             <td colSpan={5}>總計 (含稅)</td>
-            <td colSpan={3} className="text-right">{formatNumber(total)}</td>
+            <td colSpan={3} className="text-right">{formatNumber(grandTotal)}</td>
           </tr>
         </tbody>
       </table>

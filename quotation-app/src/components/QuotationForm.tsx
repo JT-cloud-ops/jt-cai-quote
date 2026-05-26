@@ -21,6 +21,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [showCustomerList, setShowCustomerList] = useState(false);
+  const [isLiffActive, setIsLiffActive] = useState(false);
   const customerListRef = useRef<HTMLDivElement>(null);
 
   const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
@@ -30,6 +31,15 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     if (savedHistory) try { setHistory(JSON.parse(savedHistory)); } catch (e) { console.error(e); }
     const savedCustomers = localStorage.getItem('customerDatabase');
     if (savedCustomers) try { setCustomers(JSON.parse(savedCustomers)); } catch (e) { console.error(e); }
+
+    // 初始化 LIFF
+    if ((window as any).liff) {
+      (window as any).liff.init({ liffId: "2010201815-z3mfiA3O" })
+        .then(() => {
+          if ((window as any).liff.isLoggedIn()) setIsLiffActive(true);
+        })
+        .catch((err: any) => console.error("LIFF Init Error:", err));
+    }
 
     const handleClickOutside = (event: MouseEvent) => {
       if (customerListRef.current && !customerListRef.current.contains(event.target as Node)) setShowCustomerList(false);
@@ -46,37 +56,40 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     if (name === 'customerName' && value.length > 0) setShowCustomerList(true);
   };
 
-  // --- 單張類 ---
   const handleItemChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const newItems = [...data.items];
     newItems[index] = { ...newItems[index], [name]: value };
     onChange({ ...data, items: newItems });
   };
+
   const addItem = () => {
-    onChange({ ...data, items: [...data.items, { id: generateId(), jobName: '', sheetSize: '', printColor: '', specialColor: '', paperName: '', processingDetails: '', quantity: '', unit: '份', unitPrice: '' }] });
+    onChange({ ...data, items: [...data.items, { id: generateId(), jobName: '', sheetSize: '', printColor: '', specialColor: '', paperName: '', processingDetails: '', quantity: '', unit: '份', unitPrice: '', taxType: 'exclude', manualAmount: '' }] });
   };
+
   const removeItem = (index: number) => {
     if (data.items.length <= 1) return;
     onChange({ ...data, items: data.items.filter((_, i) => i !== index) });
   };
 
-  // --- 冊子/百貨類 ---
   const handleBookletJobChange = (jobIndex: number, e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const newJobs = [...data.bookletJobs];
     newJobs[jobIndex] = { ...newJobs[jobIndex], [e.target.name]: e.target.value };
     onChange({ ...data, bookletJobs: newJobs });
   };
+
   const handleBookletPartChange = (jobIndex: number, partIndex: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const newJobs = [...data.bookletJobs];
     newJobs[jobIndex].parts[partIndex] = { ...newJobs[jobIndex].parts[partIndex], [e.target.name]: e.target.value };
     onChange({ ...data, bookletJobs: newJobs });
   };
+
   const addBookletPart = (jobIndex: number) => {
     const newJobs = [...data.bookletJobs];
     newJobs[jobIndex].parts.push({ id: generateId(), partName: '', sheetSize: '', printColor: '', specialColor: '', paperName: '', processingDetails: '' });
     onChange({ ...data, bookletJobs: newJobs });
   };
+
   const removeBookletPart = (jobIndex: number, partIndex: number) => {
     const newJobs = [...data.bookletJobs];
     if (newJobs[jobIndex].parts.length <= 1) return;
@@ -84,7 +97,6 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     onChange({ ...data, bookletJobs: newJobs });
   };
 
-  // --- 存取邏輯 ---
   const updateCustomerDatabase = (newData: QuotationData) => {
     if (!newData.customerName) return;
     const newCustomer: Customer = { name: newData.customerName, contactPerson: newData.contactPerson, phone: newData.phone, mobile: newData.mobile, fax: newData.fax, deliveryLocation: newData.deliveryLocation };
@@ -98,11 +110,41 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   const handleExport = () => {
     const customer = data.customerName || '未命名客戶';
     const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
+    const defaultName = `報價資料_${customer}_${firstJob || '報價單'}`;
+    
+    // 詢問使用者自訂檔名
+    const customName = prompt("請輸入存檔名稱：", defaultName);
+    if (customName === null) return; // 使用者取消
+
+    const fileName = `${customName}.json`;
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url; link.download = `報價資料_${customer}_${firstJob || '報價單'}.json`; link.click();
+    link.href = url; link.download = fileName; link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const shareToLine = () => {
+    if (!(window as any).liff) {
+      alert("目前非 LINE 環境，無法分享。");
+      return;
+    }
+
+    const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
+    const message = `【捷采報價通知】\n客戶：${data.customerName}\n印件：${firstJob}\n業務：${data.salesName}\n\n詳細報價單請見 PDF。`;
+
+    if ((window as any).liff.isApiAvailable('shareTargetPicker')) {
+      (window as any).liff.shareTargetPicker([
+        {
+          type: "text",
+          text: message
+        }
+      ]).then((res: any) => {
+        if (res) alert("已成功分享至 LINE！");
+      }).catch((err: any) => console.error(err));
+    } else {
+      alert("您的 LINE 版本不支援分享功能。");
+    }
   };
 
   const validateForm = () => {
@@ -121,11 +163,16 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     if (!validateForm()) return;
     const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
     if (!data.customerName && !firstJob) { alert('請至少輸入客戶名稱或印件名稱再儲存'); return; }
+    
+    // 先儲存到歷史紀錄
     const newSaved: SavedQuotation = { id: generateId(), timestamp: new Date().toLocaleString(), title: `${data.customerName || '未命名客戶'} - ${firstJob || '未命名印件'}`, data: { ...data } };
     const newHistory = [newSaved, ...history].slice(0, 20);
     setHistory(newHistory); localStorage.setItem('quotationHistory', JSON.stringify(newHistory));
-    updateCustomerDatabase(data); handleExport();
-    alert('儲存成功！(已儲存客戶資料、歷史紀錄並下載備份)');
+    updateCustomerDatabase(data); 
+    
+    // 執行導出（包含詢問檔名）
+    handleExport();
+    alert('已加入歷史紀錄並準備下載備份。');
   };
 
   const selectCustomer = (c: Customer) => {
@@ -160,19 +207,12 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLButtonElement) {
-        return; // 保留 Textarea 換行和 Button 的預設 Enter 行為
-      }
+      if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLButtonElement) return;
       e.preventDefault();
       const form = e.currentTarget;
-      // 找出所有可聚焦的輸入框、選單與按鈕
-      const elements = Array.from(form.querySelectorAll<HTMLElement>(
-        'input:not([type="hidden"]):not([style*="display: none"]), select, textarea, button.add-btn'
-      ));
+      const elements = Array.from(form.querySelectorAll<HTMLElement>('input:not([type="hidden"]):not([style*="display: none"]), select, textarea, button.add-btn'));
       const index = elements.indexOf(e.target as HTMLElement);
-      if (index > -1 && index < elements.length - 1) {
-        elements[index + 1].focus();
-      }
+      if (index > -1 && index < elements.length - 1) elements[index + 1].focus();
     }
   };
 
@@ -229,6 +269,24 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
         <div className="form-group"><label>行動電話</label><input type="text" name="mobile" value={data.mobile} onChange={handleChange} /></div>
         <div className="form-group"><label>傳真</label><input type="text" name="fax" value={data.fax} onChange={handleChange} /></div>
       </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label>訂印日期</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <input type="text" name="orderYear" value={data.orderYear} onChange={handleChange} style={{ width: '40px' }} /><span>/</span>
+            <input type="text" name="orderMonth" value={data.orderMonth} onChange={handleChange} style={{ width: '30px' }} /><span>/</span>
+            <input type="text" name="orderDay" value={data.orderDay} onChange={handleChange} style={{ width: '30px' }} />
+          </div>
+        </div>
+        <div className="form-group">
+          <label>交貨日期</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <input type="text" name="deliveryYear" value={data.deliveryYear} onChange={handleChange} style={{ width: '40px' }} /><span>/</span>
+            <input type="text" name="deliveryMonth" value={data.deliveryMonth} onChange={handleChange} style={{ width: '30px' }} /><span>/</span>
+            <input type="text" name="deliveryDay" value={data.deliveryDay} onChange={handleChange} style={{ width: '30px' }} />
+          </div>
+        </div>
+      </div>
 
       {data.quotationType === 'single' ? (
         <SingleSheetForm items={data.items} onChange={handleItemChange} onAdd={addItem} onRemove={removeItem} />
@@ -246,6 +304,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
       <div className="action-buttons">
         <button className="save-btn" onClick={saveToHistory}>儲存此報價單</button>
         <button className="print-button" onClick={() => { if(validateForm()) window.print(); }}>列印報價單 (PDF)</button>
+        <button className="share-btn" onClick={shareToLine} style={{ background: '#00b900', color: 'white', border: 'none', borderRadius: '8px', padding: '1rem', fontWeight: 'bold', fontSize: '1.25rem', cursor: 'pointer' }}>分享至 LINE</button>
       </div>
     </div>
   );

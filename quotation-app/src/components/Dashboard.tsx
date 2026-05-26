@@ -11,8 +11,22 @@ interface Props {
 }
 
 const Dashboard: React.FC<Props> = ({ companyId, salesName, salesMobile, onCompanyChange, onSalesChange, onSelectType }) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter') {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT') {
+        e.preventDefault();
+        const inputs = Array.from(e.currentTarget.querySelectorAll('input'));
+        const index = inputs.indexOf(target as HTMLInputElement);
+        if (index > -1 && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      }
+    }
+  };
+
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container" onKeyDown={handleKeyDown}>
       <header className="dashboard-header">
         <h1>報價系統主選單</h1>
       </header>
