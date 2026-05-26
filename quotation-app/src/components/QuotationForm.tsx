@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { QuotationData, QuotationItem, Customer, BookletPart } from '../types';
+import type { QuotationData, Customer } from '../types';
 import SingleSheetForm from './forms/SingleSheetForm';
 import BookletForm from './forms/BookletForm';
 
@@ -245,7 +245,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
 
       <div className="action-buttons">
         <button className="save-btn" onClick={saveToHistory}>儲存此報價單</button>
-        <button className="print-button" onClick={() => { if(validateDeptData()) window.print(); }}>列印報價單 (PDF)</button>
+        <button className="print-button" onClick={() => { if(validateForm()) window.print(); }}>列印報價單 (PDF)</button>
       </div>
     </div>
   );
