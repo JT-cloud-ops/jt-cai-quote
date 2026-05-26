@@ -19,34 +19,51 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
     document.title = `捷采報價單_${customer}_${firstJob || '報價單'}_${dateStr}`;
   }, [data, dateStr]);
 
-  // 計算總計
+  // 計算總計與稅額
   let subtotal = 0;
+  let tax = 0;
+  let total = 0;
+
   if (data.quotationType === 'single') {
-    subtotal = data.items.reduce((sum, item) => {
+    data.items.forEach(item => {
       const qty = parseFloat(item.quantity) || 0;
       const price = parseFloat(item.unitPrice) || 0;
-      return sum + Math.round(qty * price);
-    }, 0);
+      const itemAmount = Math.round(qty * price);
+      
+      if (item.taxType === 'include') {
+        // 含稅：總計為 itemAmount，回推未稅合計與稅金
+        const itemTotal = itemAmount;
+        const itemSubtotal = Math.round(itemTotal / 1.05);
+        const itemTax = itemTotal - itemSubtotal;
+        subtotal += itemSubtotal;
+        tax += itemTax;
+        total += itemTotal;
+      } else {
+        // 未稅：直接加總
+        const itemSubtotal = itemAmount;
+        const itemTax = Math.round(itemSubtotal * 0.05);
+        subtotal += itemSubtotal;
+        tax += itemTax;
+        total += (itemSubtotal + itemTax);
+      }
+    });
   } else if (data.quotationType === 'booklet' || data.quotationType === 'dept') {
     subtotal = data.bookletJobs.reduce((sum, job) => {
       const qty = parseFloat(job.quantity) || 0;
       const price = parseFloat(job.unitPrice) || 0;
       return sum + Math.round(qty * price);
     }, 0);
+    tax = Math.round(subtotal * 0.05);
+    total = subtotal + tax;
   }
-  
-  const tax = Math.round(subtotal * 0.05);
-  const total = subtotal + tax;
 
   const formatNumber = (num: number) => {
-    return num > 0 ? num.toLocaleString() : '';
+    return num > 0 ? num.toLocaleString() : '0';
   };
 
-  // 計算目前顯示的總列數，用來補足 7 列
   const getCurrentRowCount = () => {
     if (data.quotationType === 'single') return data.items.length;
     if (data.quotationType === 'booklet' || data.quotationType === 'dept') {
-      // 每個 Job 佔 1 行(標題) + N 行(Part) + (百貨類可能有的 1 行 HQ量)
       return data.bookletJobs.reduce((count, job) => {
         const hasHQ = data.quotationType === 'dept' && job.hqQuantity;
         return count + 1 + job.parts.length + (hasHQ ? 1 : 0);
@@ -55,7 +72,6 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
     return 0;
   };
 
-  // 取得公司抬頭資訊
   const getCompanyHeader = () => {
     switch (data.companyId) {
       case 'cai-xin':
@@ -101,7 +117,6 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
     }
   };
 
-  // 取得公司合約甲方資訊
   const getCompanyFooter = () => {
     switch (data.companyId) {
       case 'cai-xin':
@@ -191,7 +206,10 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                 <td>{item.sheetSize}</td>
                 <td>{item.printColor} {item.specialColor ? `(${item.specialColor})` : ''}</td>
                 <td>{item.paperName}</td>
-                <td className="multi-line">{item.processingDetails}</td>
+                <td className="multi-line">
+                  {item.processingDetails}
+                  {item.taxType === 'include' && <div style={{ color: '#666', fontSize: '8pt' }}>(單價含稅)</div>}
+                </td>
                 <td className="text-center">{item.quantity}{item.unit}</td>
                 <td className="text-right">{formatNumber(parseFloat(item.unitPrice) || 0)}</td>
                 <td className="text-right">{formatNumber(amount)}</td>
@@ -207,7 +225,6 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
             
             return (
               <React.Fragment key={job.id}>
-                {/* 第一列：總摘要 */}
                 <tr>
                   <td style={{ fontWeight: 'bold' }}>{job.jobName}</td>
                   <td>{job.jobSheetSize}</td>
@@ -218,7 +235,6 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   <td rowSpan={totalRowsForJob} className="text-right">{formatNumber(parseFloat(job.unitPrice) || 0)}</td>
                   <td rowSpan={totalRowsForJob} className="text-right">{formatNumber(amount)}</td>
                 </tr>
-                {/* 後續列：詳細結構部分 */}
                 {job.parts.map((part) => {
                   const hasData = [part.sheetSize, part.printColor, part.specialColor, part.paperName, part.processingDetails].some(val => val && val.trim() !== '');
                   return (
@@ -231,7 +247,6 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                     </tr>
                   );
                 })}
-                {/* 百貨類專用：總公司量列 */}
                 {hasHQ && (
                   <tr>
                     <td>&nbsp;</td>
@@ -245,14 +260,12 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
             );
           })}
 
-          {/* 填充空白列 */}
           {Array.from({ length: Math.max(0, 7 - getCurrentRowCount()) }).map((_, index) => (
             <tr key={`empty-${index}`}>
               <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
             </tr>
           ))}
 
-          {/* 備註列 */}
           {data.remarks && (
             <tr>
               <td colSpan={1} style={{ backgroundColor: '#f9f9f9', fontWeight: 'bold', textAlign: 'center' }}>備註</td>

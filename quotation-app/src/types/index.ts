@@ -18,6 +18,7 @@ export interface QuotationItem {
   quantity: string;
   unit: string;
   unitPrice: string;
+  taxType: 'exclude' | 'include'; // 未稅或含稅
 }
 
 // 冊子類型的子項目 (如封面、內頁)
