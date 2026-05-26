@@ -21,7 +21,6 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [showCustomerList, setShowCustomerList] = useState(false);
-  const [isLiffActive, setIsLiffActive] = useState(false);
   const customerListRef = useRef<HTMLDivElement>(null);
 
   const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
@@ -36,7 +35,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     if ((window as any).liff) {
       (window as any).liff.init({ liffId: "2010201815-z3mfiA3O" })
         .then(() => {
-          if ((window as any).liff.isLoggedIn()) setIsLiffActive(true);
+          console.log("LIFF Init Success");
         })
         .catch((err: any) => console.error("LIFF Init Error:", err));
     }
