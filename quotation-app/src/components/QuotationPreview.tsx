@@ -55,16 +55,107 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
     return 0;
   };
 
+  // 取得公司抬頭資訊
+  const getCompanyHeader = () => {
+    switch (data.companyId) {
+      case 'cai-xin':
+        return (
+          <>
+            <h1 className="company-name">彩鑫印刷事業股份有限公司</h1>
+            <div className="company-info" style={{ textAlign: 'center', fontSize: '11pt', marginTop: '10pt' }}>
+              <p>臺中市西屯區協和里工業區31路1之5號 &nbsp;&nbsp;&nbsp; TEL：04-23500296 &nbsp;&nbsp;&nbsp; FAX：04-23500288</p>
+            </div>
+          </>
+        );
+      case 'health':
+        return (
+          <>
+            <h1 className="company-name">赫爾思科技股份有限公司</h1>
+            <div className="company-info" style={{ textAlign: 'center', fontSize: '11pt', marginTop: '10pt' }}>
+              <p>臺中市西屯區何成里大祥街12號3樓 &nbsp;&nbsp;&nbsp; TEL：04-37031355</p>
+            </div>
+          </>
+        );
+      case 'li-xin':
+        return (
+          <>
+            <h1 className="company-name">栗鑫實業股份有限公司二廠</h1>
+            <div className="company-info" style={{ textAlign: 'center', fontSize: '11pt', marginTop: '10pt' }}>
+              <p>台中市西屯區工業31路1號 &nbsp;&nbsp;&nbsp; TEL：04-37031299 &nbsp;&nbsp;&nbsp; FAX：04-23599060</p>
+            </div>
+          </>
+        );
+      case 'jie-cai':
+      default:
+        return (
+          <>
+            <h1 className="company-name">捷 采 印 刷 事 業 (股) 公 司</h1>
+            <div className="company-info">
+              <p>總公司:台中市西屯區工業區31路1-1號 TEL:04-23580040  FAX:04-23580042</p>
+              <p>台北分公司:新北市永和區保生路1號17樓 TEL:02-25792911  FAX:02-25792771</p>
+              <p>台南分公司:台南市南區大成路二段10號 TEL:06-2613176  FAX:06-2613176</p>
+              <p>高雄分公司:高雄市三min區克武路139號 TEL:07-3852219  FAX:07-3962480</p>
+            </div>
+          </>
+        );
+    }
+  };
+
+  // 取得公司合約甲方資訊
+  const getCompanyFooter = () => {
+    switch (data.companyId) {
+      case 'cai-xin':
+        return (
+          <div className="contract-party">
+            <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：彩鑫印刷事業股份有限公司</p>
+            <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p>
+            <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：臺中市西屯區協和里工業區31路1之5號</p>
+            <p>統一編號：</p>
+            <p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：04-23500296 &nbsp;&nbsp; 傳真：04-23500288</p>
+            <p>業務代表：{data.salesName} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 行動電話：{data.salesMobile}</p>
+          </div>
+        );
+      case 'health':
+        return (
+          <div className="contract-party">
+            <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：赫爾思科技股份有限公司</p>
+            <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p>
+            <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：臺中市西屯區何成里大祥街12號3樓</p>
+            <p>統一編號：</p>
+            <p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：04-37031355 &nbsp;&nbsp; 傳真：</p>
+            <p>業務代表：{data.salesName} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 行動電話：{data.salesMobile}</p>
+          </div>
+        );
+      case 'li-xin':
+        return (
+          <div className="contract-party">
+            <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：栗鑫實業股份有限公司二廠</p>
+            <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p>
+            <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：台中市西屯區工業31路1號</p>
+            <p>統一編號：</p>
+            <p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：04-37031299 &nbsp;&nbsp; 傳真：04-23599060</p>
+            <p>業務代表：{data.salesName} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 行動電話：{data.salesMobile}</p>
+          </div>
+        );
+      case 'jie-cai':
+      default:
+        return (
+          <div className="contract-party">
+            <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：捷采印刷事業(股)公司</p>
+            <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：傅 延 本</p>
+            <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：台中工業區31路1之1號</p>
+            <p>統一編號：23518409</p>
+            <p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：04-23580040 &nbsp;&nbsp; 傳真：04-23580042</p>
+            <p>業務代表：{data.salesName} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 行動電話：{data.salesMobile}</p>
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="preview-container">
       <div className="company-header">
-        <h1 className="company-name">捷 采 印 刷 事 業 (股) 公 司</h1>
-        <div className="company-info">
-          <p>總公司:台中市西屯區工業區31路1-1號 TEL:04-23580040  FAX:04-23580042</p>
-          <p>台北分公司:新北市永和區保生路1號17樓 TEL:02-25792911  FAX:02-25792771</p>
-          <p>台南分公司:台南市南區大成路二段10號 TEL:06-2613176  FAX:06-2613176</p>
-          <p>高雄分公司:高雄市三min區克武路139號 TEL:07-3852219  FAX:07-3962480</p>
-        </div>
+        {getCompanyHeader()}
         <h2 className="main-title">報 價 單</h2>
       </div>
 

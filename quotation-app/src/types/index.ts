@@ -45,6 +45,7 @@ export interface BookletJob {
 }
 
 export interface QuotationData {
+  companyId: string;
   quotationType: 'single' | 'booklet' | 'dept';
   customerName: string;
   contactPerson: string;

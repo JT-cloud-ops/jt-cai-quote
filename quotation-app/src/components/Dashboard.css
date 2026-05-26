@@ -15,7 +15,7 @@
   padding-bottom: 0.5rem;
 }
 
-.sales-setup-box {
+.sales-setup-box, .company-selection-box {
   background: #f8f9fa;
   padding: 1.5rem;
   border-radius: 12px;
@@ -24,10 +24,41 @@
   box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
-.sales-setup-box h3 {
+.sales-setup-box h3, .company-selection-box h3 {
   margin-top: 0;
   color: #646cff;
   font-size: 1.2rem;
+}
+
+.company-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.comp-btn {
+  padding: 1rem;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.comp-btn:hover {
+  border-color: #646cff;
+  color: #646cff;
+}
+
+.comp-btn.active {
+  background: #646cff;
+  border-color: #646cff;
+  color: white;
+  box-shadow: 0 4px 10px rgba(100, 108, 255, 0.3);
 }
 
 .sales-form {

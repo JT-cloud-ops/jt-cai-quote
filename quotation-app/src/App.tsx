@@ -56,6 +56,7 @@ function App() {
   });
 
   const getInitialData = (type: 'single' | 'booklet' | 'dept' = 'single'): QuotationData => ({
+    companyId: localStorage.getItem('lastCompanyId') || 'jie-cai',
     quotationType: type,
     customerName: '',
     contactPerson: '',
@@ -130,6 +131,19 @@ function App() {
               onReset={handleReset}
             />
             <div className="preview-wrapper" style={{ overflowX: 'auto' }}>
+              <QuotationPreview 
+                data={quotationData} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default App
+: 'auto' }}>
               <QuotationPreview 
                 data={quotationData} 
               />
