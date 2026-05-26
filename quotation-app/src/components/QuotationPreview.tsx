@@ -28,7 +28,8 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
     data.items.forEach(item => {
       const qty = parseFloat(item.quantity) || 0;
       const price = parseFloat(item.unitPrice) || 0;
-      const itemAmount = Math.round(qty * price);
+      // 優先使用手動輸入的金額，若無則使用自動計算
+      const itemAmount = item.manualAmount ? (parseFloat(item.manualAmount) || 0) : Math.round(qty * price);
       
       if (item.taxType === 'include') {
         // 含稅：總計為 itemAmount，回推未稅合計與稅金
@@ -199,7 +200,10 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
         <tbody>
           {/* 單張類渲染 */}
           {data.quotationType === 'single' && data.items.map((item) => {
-            const amount = Math.round((parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0));
+            const qty = parseFloat(item.quantity) || 0;
+            const price = parseFloat(item.unitPrice) || 0;
+            const amount = item.manualAmount ? (parseFloat(item.manualAmount) || 0) : Math.round(qty * price);
+            
             return (
               <tr key={item.id}>
                 <td>{item.jobName}</td>
@@ -211,7 +215,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   {item.taxType === 'include' && <div style={{ color: '#666', fontSize: '8pt' }}>(單價含稅)</div>}
                 </td>
                 <td className="text-center">{item.quantity}{item.unit}</td>
-                <td className="text-right">{formatNumber(parseFloat(item.unitPrice) || 0)}</td>
+                <td className="text-right">{formatNumber(price)}</td>
                 <td className="text-right">{formatNumber(amount)}</td>
               </tr>
             );

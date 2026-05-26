@@ -9,18 +9,10 @@ interface Props {
 }
 
 const SingleSheetForm: React.FC<Props> = ({ items, onChange, onAdd, onRemove }) => {
-  const formatNumber = (num: number) => {
-    return num > 0 ? num.toLocaleString() : '';
-  };
-
   return (
     <>
       <div className="section-title">印件品項</div>
       {items.map((item, index) => {
-        const qty = parseFloat(item.quantity) || 0;
-        const price = parseFloat(item.unitPrice) || 0;
-        const amount = Math.round(qty * price);
-        
         return (
           <div key={item.id} className="item-form-box">
             <div className="item-header">
@@ -67,8 +59,18 @@ const SingleSheetForm: React.FC<Props> = ({ items, onChange, onAdd, onRemove }) 
             </div>
 
             <div className="form-group">
-              <label>小計金額 (自動計算)</label>
-              <input type="text" value={formatNumber(amount)} disabled style={{ backgroundColor: '#f0f0f0', fontWeight: 'bold' }} />
+              <label>小計金額 (手動輸入優先)</label>
+              <input 
+                type="text" 
+                name="manualAmount"
+                value={item.manualAmount} 
+                onChange={(e) => onChange(index, e)}
+                placeholder="若不輸入則自動計算 (數量x單價)"
+                style={{ fontWeight: 'bold', borderColor: item.manualAmount ? '#646cff' : '#ccc' }} 
+              />
+              <p style={{ fontSize: '0.8rem', color: '#888', margin: '4pt 0 0 0' }}>
+                * 若有輸入，則報價單將以此金額為準。
+              </p>
             </div>
           </div>
         );

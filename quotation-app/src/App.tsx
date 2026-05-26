@@ -28,6 +28,7 @@ function App() {
     unit: '份',
     unitPrice: '',
     taxType: 'exclude',
+    manualAmount: '',
   });
 
   const createEmptyBookletPart = (name: string): BookletPart => ({
