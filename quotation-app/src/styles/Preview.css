@@ -197,14 +197,14 @@
 @media print {
   @page {
     size: A4;
-    margin: 1cm;
+    margin: 0.5cm; /* 縮減物理邊界到 0.5cm，爭取更多內部空間 */
   }
   
   html, body {
     height: 100%;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: hidden;
+    overflow: visible !important; /* 修正 overflow 可能導致的列印切掉問題 */
   }
 
   .preview-container {
@@ -215,87 +215,102 @@
     box-shadow: none !important;
     min-height: 0 !important;
     height: auto !important;
-    font-size: 10pt; /* 縮小基礎字體 */
+    font-size: 9pt; /* 進一步縮小基礎字體 */
   }
 
   .no-print {
     display: none !important;
   }
 
+  .company-header {
+    margin-bottom: 5pt;
+    padding-bottom: 2pt;
+  }
+
   .company-name {
-    font-size: 18pt;
+    font-size: 16pt;
   }
 
   .main-title {
-    font-size: 20pt;
-    margin-top: 2pt;
-    letter-spacing: 10pt;
+    font-size: 18pt;
+    margin-top: 0;
+    letter-spacing: 8pt;
   }
 
   .company-info {
-    font-size: 8pt;
+    font-size: 7pt;
+    margin-top: 2pt;
   }
 
   .company-info p {
-    margin: 1pt 0;
+    margin: 0;
+    line-height: 1;
   }
 
   .quotation-meta-grid {
-    margin-bottom: 0.3rem;
+    margin-bottom: 5pt;
     gap: 2pt;
   }
 
   .meta-item {
-    padding: 1pt 0;
+    padding: 0;
+    font-size: 8pt;
   }
 
   .quotation-table-main th, 
   .quotation-table-main td {
-    padding: 4pt;
-    font-size: 10pt;
-    height: auto; /* 移除固定高度 */
+    padding: 2pt !important;
+    font-size: 8pt !important;
+    height: auto !important;
+    line-height: 1.1;
   }
 
   .quotation-terms-grid {
-    margin-top: 3pt;
-    margin-bottom: 3pt;
-    font-size: 9pt;
+    margin-top: 2pt;
+    margin-bottom: 2pt;
+    font-size: 8pt;
   }
 
   .term-row {
-    margin-bottom: 2pt;
-    padding-bottom: 1pt;
+    margin-bottom: 1pt;
+    padding-bottom: 0;
   }
 
   .notice {
-    font-size: 8pt;
-    line-height: 1.2;
+    font-size: 7pt;
+    line-height: 1.1;
   }
 
   .notice p {
-    margin-bottom: 1pt;
+    margin-bottom: 0;
   }
 
   .custom-notice-list li {
-    margin-bottom: 2pt;
+    margin-bottom: 1pt;
   }
 
   .contract-section {
-    margin-top: 5pt;
-    padding-top: 3pt;
+    margin-top: 3pt;
+    padding-top: 2pt;
   }
 
   .contract-party p {
-    margin: 2pt 0;
-    font-size: 9pt;
+    margin: 1pt 0;
+    font-size: 8pt;
+    line-height: 1.1;
   }
 
   .doc-footer {
-    margin-top: 5pt;
+    margin-top: 2pt;
   }
 
   .contract-title {
-    font-size: 11pt;
-    margin-bottom: 4pt;
+    font-size: 9pt;
+    margin-bottom: 2pt;
+  }
+
+  /* 針對表格列高進行極致壓縮 */
+  .quotation-table-main tr {
+    page-break-inside: avoid;
   }
 }
