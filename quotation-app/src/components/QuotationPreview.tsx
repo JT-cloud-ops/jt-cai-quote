@@ -59,7 +59,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
   }
 
   const formatNumber = (num: number) => {
-    return num > 0 ? num.toLocaleString() : '0';
+    return num > 0 ? num.toLocaleString() : '';
   };
 
   const getCurrentRowCount = () => {
@@ -168,6 +168,18 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
     }
   };
 
+  // 判斷整份單據的稅制標籤
+  const getTaxLabel = () => {
+    if (data.quotationType === 'single') {
+      const allInclude = data.items.every(item => item.taxType === 'include');
+      const someInclude = data.items.some(item => item.taxType === 'include');
+      if (allInclude) return '(含稅)';
+      if (someInclude) return '(部分含稅)';
+      return '(未稅)';
+    }
+    return '(未稅)'; // 冊子與百貨類預設為未稅
+  };
+
   return (
     <div className="preview-container">
       <div className="company-header">
@@ -215,7 +227,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   {item.taxType === 'include' && <div style={{ color: '#666', fontSize: '8pt' }}>(單價含稅)</div>}
                 </td>
                 <td className="text-center">{item.quantity}{item.unit}</td>
-                <td className="text-right">{formatNumber(price)}</td>
+                <td className="text-right">{item.unitPrice ? formatNumber(price) : ''}</td>
                 <td className="text-right">{formatNumber(amount)}</td>
               </tr>
             );
@@ -236,7 +248,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   <td>&nbsp;</td>
                   <td>{job.bindingMethod}</td>
                   <td rowSpan={totalRowsForJob} className="text-center">{job.quantity}{job.unit}</td>
-                  <td rowSpan={totalRowsForJob} className="text-right">{formatNumber(parseFloat(job.unitPrice) || 0)}</td>
+                  <td rowSpan={totalRowsForJob} className="text-right">{job.unitPrice ? formatNumber(parseFloat(job.unitPrice) || 0) : ''}</td>
                   <td rowSpan={totalRowsForJob} className="text-right">{formatNumber(amount)}</td>
                 </tr>
                 {job.parts.map((part) => {
@@ -278,7 +290,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
           )}
 
           <tr className="total-row">
-            <td colSpan={5}>合計 (未稅)</td>
+            <td colSpan={5}>合計 {getTaxLabel()}</td>
             <td colSpan={3} className="text-right">{formatNumber(subtotal)}</td>
           </tr>
           <tr className="total-row">
