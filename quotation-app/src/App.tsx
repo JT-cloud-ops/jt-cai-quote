@@ -82,10 +82,40 @@ function App() {
 
   const [quotationData, setQuotationData] = useState<QuotationData>(getInitialData());
 
-  // 當視圖切換時，如果類型不符則重置資料結構
+  // 檢查 URL 是否含有分享的資料
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedData = urlParams.get('import');
+    
+    if (sharedData) {
+      try {
+        // 解碼 Base64 資料 (使用 decodeURIComponent 處理多國語言)
+        const jsonStr = decodeURIComponent(atob(sharedData));
+        const data = JSON.parse(jsonStr);
+        if (data && data.quotationType) {
+          setQuotationData(data);
+          setView(data.quotationType);
+          // 清除 URL，避免重新整理時重複匯入提示
+          window.history.replaceState({}, document.title, window.location.pathname);
+          alert('已成功匯入分享的報價單資料！');
+        }
+      } catch (e) {
+        console.error('Import Error:', e);
+      }
+    }
+  }, []);
+
+  // 當視圖切換時，如果類型不符則重置資料結構 (除非目前有資料)
   useEffect(() => {
     if (view !== 'dashboard' && view !== quotationData.quotationType) {
-      setQuotationData(getInitialData(view as any));
+      // 如果目前的 Job 名稱為空，才自動切換結構，避免覆蓋剛匯入的資料
+      const hasContent = quotationData.quotationType === 'single' 
+        ? quotationData.items[0].jobName 
+        : quotationData.bookletJobs[0].jobName;
+        
+      if (!hasContent) {
+        setQuotationData(getInitialData(view as any));
+      }
     }
   }, [view]);
 

@@ -111,9 +111,8 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
     const defaultName = `報價資料_${customer}_${firstJob || '報價單'}`;
     
-    // 詢問使用者自訂檔名
     const customName = prompt("請輸入存檔名稱：", defaultName);
-    if (customName === null) return; // 使用者取消
+    if (customName === null) return;
 
     const fileName = `${customName}.json`;
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -124,25 +123,42 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   };
 
   const shareToLine = () => {
-    if (!(window as any).liff) {
+    const liff = (window as any).liff;
+    if (!liff) {
       alert("目前非 LINE 環境，無法分享。");
       return;
     }
 
-    const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
-    const message = `【捷采報價通知】\n客戶：${data.customerName}\n印件：${firstJob}\n業務：${data.salesName}\n\n詳細報價單請見 PDF。`;
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
 
-    if ((window as any).liff.isApiAvailable('shareTargetPicker')) {
-      (window as any).liff.shareTargetPicker([
+    const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
+    
+    // 將資料壓縮成 Base64 格式
+    const jsonData = JSON.stringify(data);
+    const base64Data = btoa(encodeURIComponent(jsonData));
+    
+    // 建立帶有資料的 LIFF 連結
+    const shareUrl = `https://liff.line.me/2010201815-z3mfiA3O?import=${base64Data}`;
+    
+    const message = `【捷采報價單分享】\n客戶：${data.customerName}\n印件：${firstJob}\n業務：${data.salesName}\n\n👇 點擊下方連結直接開啟並匯入資料：\n${shareUrl}`;
+
+    if (liff.isApiAvailable('shareTargetPicker')) {
+      liff.shareTargetPicker([
         {
           type: "text",
           text: message
         }
       ]).then((res: any) => {
         if (res) alert("已成功分享至 LINE！");
-      }).catch((err: any) => console.error(err));
+      }).catch((err: any) => {
+        console.error(err);
+        alert("分享失敗，請確認已在 LINE Developers 開啟 shareTargetPicker 權言。");
+      });
     } else {
-      alert("您的 LINE 版本不支援分享功能。");
+      alert("您的 LINE 版本不支援分享功能，或權限未開啟。");
     }
   };
 
@@ -163,15 +179,24 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
     if (!data.customerName && !firstJob) { alert('請至少輸入客戶名稱或印件名稱再儲存'); return; }
     
-    // 先儲存到歷史紀錄
     const newSaved: SavedQuotation = { id: generateId(), timestamp: new Date().toLocaleString(), title: `${data.customerName || '未命名客戶'} - ${firstJob || '未命名印件'}`, data: { ...data } };
     const newHistory = [newSaved, ...history].slice(0, 20);
     setHistory(newHistory); localStorage.setItem('quotationHistory', JSON.stringify(newHistory));
     updateCustomerDatabase(data); 
     
-    // 執行導出（包含詢問檔名）
     handleExport();
     alert('已加入歷史紀錄並準備下載備份。');
+  };
+
+  const handlePrint = () => {
+    if (!validateForm()) return;
+    
+    const liff = (window as any).liff;
+    if (liff && liff.isInClient()) {
+      alert("LINE 內部瀏覽器不支援直接列印。\n\n請點擊右上角 [...] 並選擇「在預設瀏覽器開啟」即可正常列印 PDF。");
+    } else {
+      window.print();
+    }
   };
 
   const selectCustomer = (c: Customer) => {
@@ -302,8 +327,8 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
 
       <div className="action-buttons">
         <button className="save-btn" onClick={saveToHistory}>儲存此報價單</button>
-        <button className="print-button" onClick={() => { if(validateForm()) window.print(); }}>列印報價單 (PDF)</button>
-        <button className="share-btn" onClick={shareToLine} style={{ background: '#00b900', color: 'white', border: 'none', borderRadius: '8px', padding: '1rem', fontWeight: 'bold', fontSize: '1.25rem', cursor: 'pointer' }}>分享至 LINE</button>
+        <button className="print-button" onClick={handlePrint}>列印報價單 (PDF)</button>
+        <button className="share-btn" onClick={shareToLine}>分享至 LINE</button>
       </div>
     </div>
   );
