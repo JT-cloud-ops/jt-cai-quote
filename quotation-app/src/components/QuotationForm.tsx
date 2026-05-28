@@ -134,16 +134,70 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
       return;
     }
 
-    const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
-    
+    // 計算總金額資訊以便放入訊息
+    let subtotal = 0;
+    let grandTotal = 0;
+    if (data.quotationType === 'single') {
+      data.items.forEach(item => {
+        const qty = parseFloat(item.quantity) || 0;
+        const price = parseFloat(item.unitPrice) || 0;
+        const itemAmount = item.manualAmount ? (parseFloat(item.manualAmount) || 0) : Math.round(qty * price);
+        if (item.taxType === 'include') {
+          subtotal += Math.round(itemAmount / 1.05);
+          grandTotal += itemAmount;
+        } else {
+          subtotal += itemAmount;
+          grandTotal += Math.round(itemAmount * 1.05);
+        }
+      });
+    } else {
+      data.bookletJobs.forEach(job => {
+        const qty = parseFloat(job.quantity) || 0;
+        const price = parseFloat(job.unitPrice) || 0;
+        const amt = Math.round(qty * price);
+        subtotal += amt;
+        grandTotal += Math.round(amt * 1.05);
+      });
+    }
+
+    const companyName = data.companyId === 'jie-cai' ? '捷采印刷' : data.companyId === 'cai-xin' ? '彩鑫印刷' : data.companyId === 'health' ? '赫爾思科技' : '栗鑫實業';
+    const firstJobName = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
+
     // 將資料壓縮成 Base64 格式
     const jsonData = JSON.stringify(data);
     const base64Data = btoa(encodeURIComponent(jsonData));
-    
-    // 建立帶有資料的 LIFF 連結
     const shareUrl = `https://liff.line.me/2010201815-z3mfiA3O?import=${base64Data}`;
     
-    const message = `【捷采報價單分享】\n客戶：${data.customerName}\n印件：${firstJob}\n業務：${data.salesName}\n\n👇 點擊下方連結直接開啟並匯入資料：\n${shareUrl}`;
+    // 建立詳細的報價訊息 (內容與 PDF 核心資訊一致)
+    let message = `【${companyName} 報價通知】\n`;
+    message += `━━━━━━━━━━━━━━━\n`;
+    message += `客戶名稱：${data.customerName}\n`;
+    message += `印件名稱：${firstJobName}\n`;
+    message += `報價日期：${new Date().getFullYear()-1911}年${new Date().getMonth()+1}月${new Date().getDate()}日\n`;
+    message += `━━━━━━━━━━━━━━━\n`;
+    
+    // 列出品項摘要
+    if (data.quotationType === 'single') {
+      data.items.forEach((item, idx) => {
+        message += `項目${idx+1}：${item.jobName || '未命名'}\n`;
+        message += `規格：${item.sheetSize} / ${item.printColor} / ${item.paperName}\n`;
+        message += `數量：${item.quantity}${item.unit}\n\n`;
+      });
+    } else {
+      data.bookletJobs.forEach((job) => {
+        message += `冊子：${job.jobName}\n`;
+        message += `裝訂：${job.bindingMethod}\n`;
+        message += `數量：${job.quantity}${job.unit}\n\n`;
+      });
+    }
+
+    message += `━━━━━━━━━━━━━━━\n`;
+    message += `合計(未稅)：NT$ ${subtotal.toLocaleString()}\n`;
+    message += `總計(含稅)：NT$ ${grandTotal.toLocaleString()}\n`;
+    message += `━━━━━━━━━━━━━━━\n`;
+    message += `業務：${data.salesName}\n`;
+    message += `電話：${data.salesMobile}\n\n`;
+    message += `👇 點擊下方連結可查看完整詳情及匯入資料：\n${shareUrl}`;
 
     if (liff.isApiAvailable('shareTargetPicker')) {
       liff.shareTargetPicker([
@@ -152,13 +206,13 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
           text: message
         }
       ]).then((res: any) => {
-        if (res) alert("已成功分享至 LINE！");
+        if (res) alert("已成功分享報價單至 LINE！");
       }).catch((err: any) => {
         console.error(err);
-        alert("分享失敗，請確認已在 LINE Developers 開啟 shareTargetPicker 權言。");
+        alert("分享失敗，請確認權限已開啟。");
       });
     } else {
-      alert("您的 LINE 版本不支援分享功能，或權限未開啟。");
+      alert("您的 LINE 版本不支援分享功能。");
     }
   };
 
