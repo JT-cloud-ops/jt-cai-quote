@@ -332,8 +332,16 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
         </div>
         <div className="contract-section">
           <p className="contract-title">立合約書人</p>
-          <div className="contract-grid">
+          <div className="contract-grid" style={{ position: 'relative' }}>
             {getCompanyFooter()}
+            <div className="stamp-container no-print-background">
+              <img 
+                src={`/jt-cai-quote/stamps/${data.companyId}.jpg`} 
+                alt="發票章" 
+                className="company-stamp"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
+            </div>
             <div className="contract-party"><p>乙&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：</p><p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p><p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：</p><p>統一編號：</p><p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 傳真：</p></div>
           </div>
         </div>

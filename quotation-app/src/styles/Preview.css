@@ -180,6 +180,23 @@
   gap: 20pt;
 }
 
+.stamp-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1; /* 降到最底層，讓文字浮在印章上方 */
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.company-stamp {
+  height: 110pt;
+  width: auto;
+  mix-blend-mode: multiply; 
+  filter: contrast(1.2) brightness(1.1); /* 提高對比，讓背景更白、顏色更鮮明，助於去背 */
+}
+
 .contract-party p {
   margin: 4pt 0;
   font-size: 10pt;
