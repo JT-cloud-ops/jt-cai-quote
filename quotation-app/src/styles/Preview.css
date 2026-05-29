@@ -194,11 +194,11 @@
 
 .stamp-container {
   position: absolute;
-  top: 15%;  /* 往左上移 */
-  left: 30%; /* 往左上移 */
+  top: 5%;   /* 更往上移 */
+  left: 20%;  /* 更往左移 */
   z-index: 1; /* 放在文字底層 */
   pointer-events: none;
-  opacity: 0.75;
+  opacity: 0.7;
   /* 關鍵修復：確保列印時渲染濾鏡與透明度 */
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
