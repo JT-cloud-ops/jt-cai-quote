@@ -26,9 +26,14 @@ const BookletForm: React.FC<Props> = ({ jobs, isDept, onJobChange, onPartChange,
               <label>總數量</label>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <input type="text" name="quantity" value={job.quantity} onChange={(e) => onJobChange(jobIndex, e)} style={{ flex: 1 }} />
-                <select name="unit" value={job.unit} onChange={(e) => onJobChange(jobIndex, e)} style={{ padding: '0.6rem', borderRadius: '4px', border: '1px solid #ccc' }}>
-                  <option value="本">本</option><option value="份">份</option>
-                </select>
+                <input 
+                  type="text" 
+                  name="unit" 
+                  value={job.unit} 
+                  onChange={(e) => onJobChange(jobIndex, e)} 
+                  placeholder="單位"
+                  style={{ width: '80px' }} 
+                />
               </div>
             </div>
             <div className="form-group"><label>每本單價</label><input type="text" name="unitPrice" value={job.unitPrice} onChange={(e) => onJobChange(jobIndex, e)} /></div>

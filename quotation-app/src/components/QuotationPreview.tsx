@@ -213,14 +213,18 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                 <td>{item.sheetSize}</td>
                 <td>{item.printColor} {item.specialColor ? `(${item.specialColor})` : ''}</td>
                 <td>{item.paperName}</td>
-                <td className="multi-line">{item.processingDetails}</td>
-                <td className="text-center">{item.quantity}{item.unit}</td>
+                <td className="multi-line text-center">{item.processingDetails}</td>
+                <td className="text-center">{item.quantity ? `${item.quantity}${item.unit}` : ''}</td>
                 <td className="text-right">{item.unitPrice ? formatNumber(price) : ''}</td>
                 <td className="text-right">
-                  {formatNumber(amount)}
-                  <span style={{ fontSize: '8pt', marginLeft: '2pt', display: 'inline-block' }}>
-                    {item.taxType === 'include' ? '(含稅)' : '(未稅)'}
-                  </span>
+                  {amount > 0 ? (
+                    <>
+                      {formatNumber(amount)}
+                      <span style={{ fontSize: '8pt', marginLeft: '2pt', display: 'inline-block' }}>
+                        {item.taxType === 'include' ? '(含稅)' : '(未稅)'}
+                      </span>
+                    </>
+                  ) : ''}
                 </td>
               </tr>
             );
@@ -239,12 +243,16 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   <td>{job.jobSheetSize}</td>
                   <td>&nbsp;</td>
                   <td>&nbsp;</td>
-                  <td>{job.bindingMethod}</td>
-                  <td rowSpan={totalRowsForJob} className="text-center">{job.quantity}{job.unit}</td>
+                  <td className="text-center">{job.bindingMethod}</td>
+                  <td rowSpan={totalRowsForJob} className="text-center">{job.quantity ? `${job.quantity}${job.unit}` : ''}</td>
                   <td rowSpan={totalRowsForJob} className="text-right">{job.unitPrice ? formatNumber(parseFloat(job.unitPrice) || 0) : ''}</td>
                   <td rowSpan={totalRowsForJob} className="text-right">
-                    {formatNumber(amount)}
-                    <span style={{ fontSize: '8pt', marginLeft: '2pt', display: 'inline-block' }}>(未稅)</span>
+                    {amount > 0 ? (
+                      <>
+                        {formatNumber(amount)}
+                        <span style={{ fontSize: '8pt', marginLeft: '2pt', display: 'inline-block' }}>(未稅)</span>
+                      </>
+                    ) : ''}
                   </td>
                 </tr>
                 {job.parts.map((part) => {
@@ -255,7 +263,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                       <td>{part.sheetSize}</td>
                       <td>{part.printColor} {part.specialColor ? `(${part.specialColor})` : ''}</td>
                       <td>{part.paperName}</td>
-                      <td className="multi-line">{part.processingDetails}</td>
+                      <td className="multi-line text-center">{part.processingDetails}</td>
                     </tr>
                   );
                 })}
@@ -265,7 +273,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                     <td>&nbsp;</td>
                     <td>&nbsp;</td>
                     <td>&nbsp;</td>
-                    <td className="multi-line" style={{ fontWeight: 'bold' }}>總公司量：{job.hqQuantity}{job.unit}</td>
+                    <td className="multi-line text-center" style={{ fontWeight: 'bold' }}>總公司量：{job.hqQuantity}{job.unit}</td>
                   </tr>
                 )}
               </React.Fragment>
@@ -281,7 +289,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
           {data.remarks && (
             <tr>
               <td colSpan={1} style={{ backgroundColor: '#f9f9f9', fontWeight: 'bold', textAlign: 'center' }}>備註</td>
-              <td colSpan={7} className="multi-line">{data.remarks}</td>
+              <td colSpan={7} className="multi-line text-center">{data.remarks}</td>
             </tr>
           )}
 

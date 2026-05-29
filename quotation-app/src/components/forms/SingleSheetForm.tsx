@@ -41,9 +41,14 @@ const SingleSheetForm: React.FC<Props> = ({ items, onChange, onAdd, onRemove }) 
                 <label>數量 / 單位</label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <input type="text" name="quantity" value={item.quantity} onChange={(e) => onChange(index, e)} style={{ flex: 1 }} />
-                  <select name="unit" value={item.unit} onChange={(e) => onChange(index, e)} style={{ width: '80px' }}>
-                    <option value="份">份</option><option value="張">張</option><option value="本">本</option><option value="個">個</option>
-                  </select>
+                  <input 
+                    type="text" 
+                    name="unit" 
+                    value={item.unit} 
+                    onChange={(e) => onChange(index, e)} 
+                    placeholder="單位"
+                    style={{ width: '80px' }} 
+                  />
                 </div>
               </div>
               <div className="form-group">
