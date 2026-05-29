@@ -199,6 +199,9 @@
   z-index: 1; /* 放在文字底層 */
   pointer-events: none;
   opacity: 0.75;
+  /* 關鍵修復：確保列印時渲染濾鏡與透明度 */
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 .company-stamp {
@@ -206,6 +209,8 @@
   width: auto;
   mix-blend-mode: multiply; 
   filter: contrast(1.5) brightness(1.2); /* 提高對比與亮度，讓去背更乾淨 */
+  /* 確保圖片在列印時不會被裁切 */
+  display: block;
 }
 
 .doc-footer {

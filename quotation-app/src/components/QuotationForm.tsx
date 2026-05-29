@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { QuotationData, Customer } from '../types';
 import SingleSheetForm from './forms/SingleSheetForm';
 import BookletForm from './forms/BookletForm';
+import html2canvas from 'html2canvas';
 
 interface Props {
   data: QuotationData;
@@ -21,6 +22,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [showCustomerList, setShowCustomerList] = useState(false);
+  const [isGeneratingImg, setIsGeneratingImg] = useState(false);
   const customerListRef = useRef<HTMLDivElement>(null);
 
   const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
@@ -31,12 +33,9 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     const savedCustomers = localStorage.getItem('customerDatabase');
     if (savedCustomers) try { setCustomers(JSON.parse(savedCustomers)); } catch (e) { console.error(e); }
 
-    // 初始化 LIFF
     if ((window as any).liff) {
       (window as any).liff.init({ liffId: "2010201815-z3mfiA3O" })
-        .then(() => {
-          console.log("LIFF Init Success");
-        })
+        .then(() => console.log("LIFF Init Success"))
         .catch((err: any) => console.error("LIFF Init Error:", err));
     }
 
@@ -106,114 +105,79 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     localStorage.setItem('customerDatabase', JSON.stringify(newCustomers));
   };
 
-  const handleExport = () => {
+  const handleExport = (askName = true) => {
     const customer = data.customerName || '未命名客戶';
     const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
     const defaultName = `報價資料_${customer}_${firstJob || '報價單'}`;
     
-    const customName = prompt("請輸入存檔名稱：", defaultName);
-    if (customName === null) return;
+    let fileName = `${defaultName}.json`;
+    if (askName) {
+      const customName = prompt("請輸入 JSON 備份檔名稱：", defaultName);
+      if (customName === null) return null;
+      fileName = `${customName}.json`;
+    }
 
-    const fileName = `${customName}.json`;
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url; link.download = fileName; link.click();
     URL.revokeObjectURL(url);
+    return fileName;
   };
 
-  const shareToLine = () => {
+  const shareToLine = async () => {
     const liff = (window as any).liff;
-    if (!liff) {
-      alert("目前非 LINE 環境，無法分享。");
+    const previewElement = document.querySelector('.preview-container') as HTMLElement;
+    
+    if (!previewElement) {
+      alert("找不到預覽畫面，無法轉圖。");
       return;
     }
 
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
+    setIsGeneratingImg(true);
+    try {
+      // 使用 html2canvas 將預覽畫面轉為圖片
+      const canvas = await html2canvas(previewElement, {
+        scale: 2, // 提高解析度
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/jpeg', 0.8);
+      const customer = data.customerName || '未命名客戶';
+      const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
+      const fileName = `報價單_${customer}_${firstJob}.jpg`;
 
-    // 計算總金額資訊以便放入訊息
-    let subtotal = 0;
-    let grandTotal = 0;
-    if (data.quotationType === 'single') {
-      data.items.forEach(item => {
-        const qty = parseFloat(item.quantity) || 0;
-        const price = parseFloat(item.unitPrice) || 0;
-        const itemAmount = item.manualAmount ? (parseFloat(item.manualAmount) || 0) : Math.round(qty * price);
-        if (item.taxType === 'include') {
-          subtotal += Math.round(itemAmount / 1.05);
-          grandTotal += itemAmount;
-        } else {
-          subtotal += itemAmount;
-          grandTotal += Math.round(itemAmount * 1.05);
+      // 檢查是否支援 Web Share API (大部分手機瀏覽器支援)
+      if (navigator.share && navigator.canShare) {
+        const blob = await (await fetch(imgData)).blob();
+        const file = new File([blob], fileName, { type: 'image/jpeg' });
+        
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: '報價單圖檔',
+            text: `這是來自捷采印刷的報價單：${customer} - ${firstJob}`
+          });
+          setIsGeneratingImg(false);
+          return;
         }
-      });
-    } else {
-      data.bookletJobs.forEach(job => {
-        const qty = parseFloat(job.quantity) || 0;
-        const price = parseFloat(job.unitPrice) || 0;
-        const amt = Math.round(qty * price);
-        subtotal += amt;
-        grandTotal += Math.round(amt * 1.05);
-      });
+      }
+
+      // 如果不支援自動分享，則顯示圖片讓使用者手動儲存
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.document.write(`<img src="${imgData}" style="width:100%" />`);
+        newWindow.document.write(`<p style="text-align:center; font-size:1.5rem;">請長按圖片進行分享或儲存</p>`);
+      } else {
+        alert("請允許彈出視窗以查看產生的報價單圖檔。");
+      }
+
+    } catch (err) {
+      console.error("Image generation error:", err);
+      alert("圖檔產生失敗，請再試一次。");
     }
-
-    const companyName = data.companyId === 'jie-cai' ? '捷采印刷' : data.companyId === 'cai-xin' ? '彩鑫印刷' : data.companyId === 'health' ? '赫爾思科技' : '栗鑫實業';
-    const firstJobName = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
-
-    // 將資料壓縮成 Base64 格式
-    const jsonData = JSON.stringify(data);
-    const base64Data = btoa(encodeURIComponent(jsonData));
-    const shareUrl = `https://liff.line.me/2010201815-z3mfiA3O?import=${base64Data}`;
-    
-    // 建立詳細的報價訊息 (內容與 PDF 核心資訊一致)
-    let message = `【${companyName} 報價通知】\n`;
-    message += `━━━━━━━━━━━━━━━\n`;
-    message += `客戶名稱：${data.customerName}\n`;
-    message += `印件名稱：${firstJobName}\n`;
-    message += `報價日期：${new Date().getFullYear()-1911}年${new Date().getMonth()+1}月${new Date().getDate()}日\n`;
-    message += `━━━━━━━━━━━━━━━\n`;
-    
-    // 列出品項摘要
-    if (data.quotationType === 'single') {
-      data.items.forEach((item, idx) => {
-        message += `項目${idx+1}：${item.jobName || '未命名'}\n`;
-        message += `規格：${item.sheetSize} / ${item.printColor} / ${item.paperName}\n`;
-        message += `數量：${item.quantity}${item.unit}\n\n`;
-      });
-    } else {
-      data.bookletJobs.forEach((job) => {
-        message += `冊子：${job.jobName}\n`;
-        message += `裝訂：${job.bindingMethod}\n`;
-        message += `數量：${job.quantity}${job.unit}\n\n`;
-      });
-    }
-
-    message += `━━━━━━━━━━━━━━━\n`;
-    message += `合計(未稅)：NT$ ${subtotal.toLocaleString()}\n`;
-    message += `總計(含稅)：NT$ ${grandTotal.toLocaleString()}\n`;
-    message += `━━━━━━━━━━━━━━━\n`;
-    message += `業務：${data.salesName}\n`;
-    message += `電話：${data.salesMobile}\n\n`;
-    message += `👇 點擊下方連結可查看完整詳情及匯入資料：\n${shareUrl}`;
-
-    if (liff.isApiAvailable('shareTargetPicker')) {
-      liff.shareTargetPicker([
-        {
-          type: "text",
-          text: message
-        }
-      ]).then((res: any) => {
-        if (res) alert("已成功分享報價單至 LINE！");
-      }).catch((err: any) => {
-        console.error(err);
-        alert("分享失敗，請確認權限已開啟。");
-      });
-    } else {
-      alert("您的 LINE 版本不支援分享功能。");
-    }
+    setIsGeneratingImg(false);
   };
 
   const validateForm = () => {
@@ -228,26 +192,32 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     return true;
   };
 
-  const saveToHistory = () => {
+  const saveToHistory = (silent = false) => {
     if (!validateForm()) return;
     const firstJob = data.quotationType === 'single' ? data.items[0]?.jobName : data.bookletJobs[0]?.jobName;
-    if (!data.customerName && !firstJob) { alert('請至少輸入客戶名稱或印件名稱再儲存'); return; }
+    if (!data.customerName && !firstJob) { if(!silent) alert('請至少輸入客戶名稱或印件名稱再儲存'); return; }
     
     const newSaved: SavedQuotation = { id: generateId(), timestamp: new Date().toLocaleString(), title: `${data.customerName || '未命名客戶'} - ${firstJob || '未命名印件'}`, data: { ...data } };
     const newHistory = [newSaved, ...history].slice(0, 20);
     setHistory(newHistory); localStorage.setItem('quotationHistory', JSON.stringify(newHistory));
     updateCustomerDatabase(data); 
     
-    handleExport();
-    alert('已加入歷史紀錄並準備下載備份。');
+    if (!silent) {
+      handleExport();
+      alert('已加入歷史紀錄並準備下載備份。');
+    }
   };
 
   const handlePrint = () => {
     if (!validateForm()) return;
     
+    // 同時執行儲存功能 (靜默模式，不跳 alert)
+    saveToHistory(true);
+    handleExport(false); // 自動下載一個 JSON 備份
+
     const liff = (window as any).liff;
     if (liff && liff.isInClient()) {
-      alert("LINE 內部瀏覽器不支援直接列印。\n\n請點擊右上角 [...] 並選擇「在預設瀏覽器開啟」即可正常列印 PDF。");
+      alert("LINE 內部瀏覽器不支援直接列印。\n\n系統已為您自動儲存紀錄並下載 JSON 備份。\n請點擊右上角 [...] 並選擇「在預設瀏覽器開啟」即可列印 PDF。");
     } else {
       window.print();
     }
@@ -380,9 +350,11 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
       </div>
 
       <div className="action-buttons">
-        <button className="save-btn" onClick={saveToHistory}>儲存此報價單</button>
+        <button className="save-btn" onClick={() => saveToHistory()}>儲存此報價單</button>
         <button className="print-button" onClick={handlePrint}>列印報價單 (PDF)</button>
-        <button className="share-btn" onClick={shareToLine}>分享至 LINE</button>
+        <button className="share-btn" onClick={shareToLine} disabled={isGeneratingImg}>
+          {isGeneratingImg ? '轉圖中...' : '分享報價單 (JPG)'}
+        </button>
       </div>
     </div>
   );
