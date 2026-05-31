@@ -193,11 +193,11 @@
   z-index: 10;
 }
 
-/* 發票章容器：絕對定位在甲方區域 */
+/* 修正發票章列印裁切問題 */
 .stamp-container {
   position: absolute;
-  top: -10pt;
-  left: 20pt;
+  top: -35pt; /* 向上移動，對齊「甲方」文字高度 */
+  left: -5pt;  /* 向左移動 */
   z-index: 1; /* 位於文字下方 */
   pointer-events: none;
   width: 140pt;
