@@ -197,7 +197,7 @@
 .stamp-container {
   position: absolute;
   top: -35pt; /* 向上移動，對齊「甲方」文字高度 */
-  left: -5pt;  /* 向左移動 */
+  left: 40pt;  /* 向右移動（修正指令） */
   z-index: 1; /* 位於文字下方 */
   pointer-events: none;
   width: 140pt;
