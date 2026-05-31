@@ -196,8 +196,8 @@
 /* 修正發票章列印裁切問題 */
 .stamp-container {
   position: absolute;
-  top: -35pt; /* 向上移動，對齊「甲方」文字高度 */
-  left: 40pt;  /* 向右移動（修正指令） */
+  top: -50pt; /* 再上移 */
+  left: 125pt; /* 再右移約 3公分 (85pt) */
   z-index: 1; /* 位於文字下方 */
   pointer-events: none;
   width: 140pt;
