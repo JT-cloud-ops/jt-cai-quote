@@ -211,13 +211,13 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   const handlePrint = () => {
     if (!validateForm()) return;
     
-    // 同時執行儲存功能 (靜默模式，不跳 alert)
+    // 同時執行儲存功能 (靜默模式儲存至歷史，但下載檔案時詢問檔名)
     saveToHistory(true);
-    handleExport(false); // 自動下載一個 JSON 備份
+    handleExport(true); 
 
     const liff = (window as any).liff;
     if (liff && liff.isInClient()) {
-      alert("LINE 內部瀏覽器不支援直接列印。\n\n系統已為您自動儲存紀錄並下載 JSON 備份。\n請點擊右上角 [...] 並選擇「在預設瀏覽器開啟」即可列印 PDF。");
+      alert("LINE 內部瀏覽器不支援直接列印。\n\n系統已為您自動儲存紀錄並準備下載 JSON 備份。\n請點擊右上角 [...] 並選擇「在預設瀏覽器開啟」即可列印 PDF。");
     } else {
       window.print();
     }
