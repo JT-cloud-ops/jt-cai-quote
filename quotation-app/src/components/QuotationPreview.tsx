@@ -359,6 +359,3 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
 };
 
 export default QuotationPreview;
-
-
-export default QuotationPreview;
