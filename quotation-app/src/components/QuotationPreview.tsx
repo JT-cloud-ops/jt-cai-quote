@@ -122,10 +122,22 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
   };
 
   const getCompanyFooter = () => {
+    const stampImg = (
+      <div className="stamp-container">
+        <img 
+          src={`/jt-cai-quote/stamps/${data.companyId}.jpg`} 
+          alt="發票章" 
+          className="company-stamp"
+          onError={(e) => (e.currentTarget.style.display = 'none')}
+        />
+      </div>
+    );
+
     switch (data.companyId) {
       case 'cai-xin':
         return (
           <div className="contract-party">
+            {stampImg}
             <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：彩鑫印刷事業股份有限公司</p>
             <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p>
             <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：臺中市西屯區協和里工業區31路1之5號</p>
@@ -137,6 +149,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
       case 'health':
         return (
           <div className="contract-party">
+            {stampImg}
             <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：赫爾思科技股份有限公司</p>
             <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p>
             <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：臺中市西屯區何成里大祥街12號3樓</p>
@@ -148,6 +161,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
       case 'li-xin':
         return (
           <div className="contract-party">
+            {stampImg}
             <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：栗鑫實業股份有限公司二廠</p>
             <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p>
             <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：台中市西屯區工業31路1號</p>
@@ -160,6 +174,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
       default:
         return (
           <div className="contract-party">
+            {stampImg}
             <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：捷采印刷事業(股)公司</p>
             <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：傅 延 本</p>
             <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：台中工業區31路1之1號</p>
@@ -332,16 +347,8 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
         </div>
         <div className="contract-section">
           <p className="contract-title">立合約書人</p>
-          <div className="contract-grid" style={{ position: 'relative' }}>
+          <div className="contract-grid">
             {getCompanyFooter()}
-            <div className="stamp-container no-print-background">
-              <img 
-                src={`/jt-cai-quote/stamps/${data.companyId}.jpg`} 
-                alt="發票章" 
-                className="company-stamp"
-                onError={(e) => (e.currentTarget.style.display = 'none')}
-              />
-            </div>
             <div className="contract-party"><p>乙&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：</p><p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p><p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：</p><p>統一編號：</p><p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 傳真：</p></div>
           </div>
         </div>
@@ -350,5 +357,8 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
     </div>
   );
 };
+
+export default QuotationPreview;
+
 
 export default QuotationPreview;
