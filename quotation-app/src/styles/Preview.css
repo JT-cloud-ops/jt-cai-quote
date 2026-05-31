@@ -178,33 +178,34 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20pt;
-  position: relative;
 }
 
+/* 文字層級設為高，確保在印章之上 */
 .contract-party {
   position: relative;
-  z-index: 10;
 }
 
 .contract-party p {
   margin: 4pt 0;
   font-size: 10pt;
   line-height: 1.4;
+  position: relative;
+  z-index: 10;
 }
 
-/* 修正發票章列印裁切問題 */
+/* 發票章容器：絕對定位在甲方區域 */
 .stamp-container {
   position: absolute;
-  top: -20pt; /* 向上移動，避免被下方框線裁切 */
-  left: 20pt; /* 向左調整位置 */
-  z-index: 5; /* 位於文字下方，但高於背景 */
+  top: -10pt;
+  left: 20pt;
+  z-index: 1; /* 位於文字下方 */
   pointer-events: none;
-  width: 150pt; /* 明確寬度 */
-  height: 150pt; /* 明確高度 */
+  width: 140pt;
+  height: 140pt;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: visible !important; /* 確保內容不被隱藏 */
+  overflow: visible !important;
 }
 
 .company-stamp {
@@ -212,8 +213,7 @@
   max-height: 100%;
   width: auto;
   height: auto;
-  mix-blend-mode: multiply; 
-  filter: contrast(1.5) brightness(1.1);
+  /* PNG 已經去背，這裡不需要 multiply 以免在某些瀏覽器出錯 */
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -233,7 +233,7 @@
   }
   
   html, body {
-    height: auto; /* 改為 auto 避免強制裁切 */
+    height: auto;
     margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
@@ -254,10 +254,14 @@
     display: none !important;
   }
 
-  /* 確保蓋章區域在列印時不被裁切 */
   .contract-section, .contract-grid {
     overflow: visible !important;
     page-break-inside: avoid;
+  }
+
+  /* 確保印章容器在列印時不被裁切 */
+  .stamp-container {
+    overflow: visible !important;
   }
 
   .company-header {

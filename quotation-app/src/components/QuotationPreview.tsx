@@ -32,7 +32,6 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
       const itemAmount = item.manualAmount ? (parseFloat(item.manualAmount) || 0) : Math.round(qty * price);
       
       if (item.taxType === 'include') {
-        // 含稅：此金額即為含稅總額
         const itemTotal = itemAmount;
         const itemSub = Math.round(itemTotal / 1.05);
         const itemTax = itemTotal - itemSub;
@@ -40,7 +39,6 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
         totalTax += itemTax;
         grandTotal += itemTotal;
       } else {
-        // 未稅：此金額為未稅底價
         const itemSub = itemAmount;
         const itemTax = Math.round(itemSub * 0.05);
         totalSubtotal += itemSub;
@@ -49,7 +47,6 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
       }
     });
   } else {
-    // 冊子與百貨類：目前預設為未稅計算
     data.bookletJobs.forEach(job => {
       const qty = parseFloat(job.quantity) || 0;
       const price = parseFloat(job.unitPrice) || 0;
@@ -122,13 +119,22 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
   };
 
   const getCompanyFooter = () => {
+    // 關鍵：使用 PNG 圖檔以實現真正的背景透明
     const stampImg = (
       <div className="stamp-container">
         <img 
-          src={`/jt-cai-quote/stamps/${data.companyId}.jpg`} 
+          src={`/jt-cai-quote/stamps/${data.companyId}.png`} 
           alt="發票章" 
           className="company-stamp"
-          onError={(e) => (e.currentTarget.style.display = 'none')}
+          onError={(e) => {
+            // 如果 PNG 不存在，嘗試用 JPG
+            const img = e.currentTarget;
+            if (img.src.endsWith('.png')) {
+              img.src = img.src.replace('.png', '.jpg');
+            } else {
+              img.style.display = 'none';
+            }
+          }}
         />
       </div>
     );
