@@ -126,7 +126,6 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   };
 
   const shareToLine = async () => {
-    const liff = (window as any).liff;
     const previewElement = document.querySelector('.preview-container') as HTMLElement;
     
     if (!previewElement) {
