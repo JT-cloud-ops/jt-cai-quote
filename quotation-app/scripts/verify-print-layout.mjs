@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 
 const form = readFileSync(new URL('../src/components/QuotationForm.tsx', import.meta.url), 'utf8');
 const formCss = readFileSync(new URL('../src/styles/Form.css', import.meta.url), 'utf8');
-const preview = readFileSync(new URL('../src/components/QuotationPreview.tsx', import.meta.url), 'utf8');
+const domain = readFileSync(new URL('../src/domain/quotationCalculations.ts', import.meta.url), 'utf8');
 const previewCss = readFileSync(new URL('../src/styles/Preview.css', import.meta.url), 'utf8');
 
 const checks = [
@@ -16,7 +16,7 @@ const checks = [
   },
   {
     name: 'long quotations can scale below 90%',
-    pass: /const layoutScale = clamp\([^,]+,\s*0\.8[0-9]\s*,\s*1\.26\)/.test(preview),
+    pass: /layoutScale: clamp\([^,]+,\s*0\.8[0-9]\s*,\s*1\.26\)/.test(domain),
   },
   {
     name: 'print table rows can shrink for dense content',

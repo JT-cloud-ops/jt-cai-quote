@@ -1,19 +1,16 @@
 import React from 'react';
 import type { QuotationData } from '../types';
+import { calculateTotals, calculateDensityScore, getLayoutScales, calculateEmptyRowCount } from '../domain/quotationCalculations';
+import { companies } from '../config/companies';
+import { formatCurrency } from '../shared/utils/formatCurrency';
+import { getMinguoDateInfo } from '../shared/utils/dateUtils';
 
 interface Props {
   data: QuotationData;
 }
 
 const QuotationPreview: React.FC<Props> = ({ data }) => {
-  const today = new Date();
-  const year = today.getFullYear() - 1911; // 民國年
-  const month = today.getMonth() + 1;
-  const day = today.getDate();
-  const dateStr = `${year}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}`;
-
-  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
-  const textLength = (value?: string) => (value?.trim().length ?? 0);
+  const { year, month, day, dateStr } = getMinguoDateInfo();
 
   // 當資料變更時，自動更新網頁標題
   React.useEffect(() => {
@@ -22,98 +19,12 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
     document.title = `捷采報價單_${customer}_${firstJob || '報價單'}_${dateStr}`;
   }, [data, dateStr]);
 
-  // 定義全局加總變數
-  let totalSubtotal = 0; // 未稅合計
-  let totalTax = 0;      // 營業稅合計
-  let grandTotal = 0;    // 含稅總計
+  // 使用抽離的計算邏輯
+  const { totalSubtotal, totalTax, grandTotal } = calculateTotals(data);
+  const densityScore = calculateDensityScore(data);
+  const { layoutScale, lineScale, rowScale } = getLayoutScales(densityScore);
+  const emptyRowCount = calculateEmptyRowCount(data);
 
-  if (data.quotationType === 'single') {
-    data.items.forEach(item => {
-      const qty = parseFloat(item.quantity) || 0;
-      const price = parseFloat(item.unitPrice) || 0;
-      // 優先使用手動輸入的金額，若無則使用自動計算
-      const itemAmount = item.manualAmount ? (parseFloat(item.manualAmount) || 0) : Math.round(qty * price);
-      
-      if (item.taxType === 'include') {
-        const itemTotal = itemAmount;
-        const itemSub = Math.round(itemTotal / 1.05);
-        const itemTax = itemTotal - itemSub;
-        totalSubtotal += itemSub;
-        totalTax += itemTax;
-        grandTotal += itemTotal;
-      } else {
-        const itemSub = itemAmount;
-        const itemTax = Math.round(itemSub * 0.05);
-        totalSubtotal += itemSub;
-        totalTax += itemTax;
-        grandTotal += (itemSub + itemTax);
-      }
-    });
-  } else {
-    data.bookletJobs.forEach(job => {
-      const qty = parseFloat(job.quantity) || 0;
-      const price = parseFloat(job.unitPrice) || 0;
-      const itemSub = Math.round(qty * price);
-      const itemTax = Math.round(itemSub * 0.05);
-      totalSubtotal += itemSub;
-      totalTax += itemTax;
-      grandTotal += (itemSub + itemTax);
-    });
-  }
-
-  const formatNumber = (num: number) => {
-    return num > 0 ? num.toLocaleString() : '';
-  };
-
-  const getCurrentRowCount = () => {
-    if (data.quotationType === 'single') return data.items.length;
-    if (data.quotationType === 'booklet' || data.quotationType === 'dept') {
-      return data.bookletJobs.reduce((count, job) => {
-        const hasHQ = data.quotationType === 'dept' && job.hqQuantity;
-        return count + 1 + job.parts.length + (hasHQ ? 1 : 0);
-      }, 0);
-    }
-    return 0;
-  };
-
-  const currentRowCount = getCurrentRowCount() + (data.remarks ? 1 : 0);
-  const textLoad =
-    (textLength(data.customerName) + textLength(data.contactPerson) + textLength(data.phone) + textLength(data.mobile) + textLength(data.fax)) / 90 +
-    (textLength(data.paymentMethod) + textLength(data.deliveryLocation) + textLength(data.salesName) + textLength(data.salesMobile)) / 70 +
-    textLength(data.remarks) / 140 +
-    (data.quotationType === 'single'
-      ? data.items.reduce((sum, item) => {
-          return sum
-            + textLength(item.jobName) / 45
-            + textLength(item.sheetSize) / 55
-            + textLength(item.printColor) / 55
-            + textLength(item.specialColor) / 70
-            + textLength(item.paperName) / 55
-            + textLength(item.processingDetails) / 85;
-        }, 0)
-      : data.bookletJobs.reduce((sum, job) => {
-          const partLoad = job.parts.reduce((partSum, part) => {
-            return partSum
-              + textLength(part.partName) / 45
-              + textLength(part.sheetSize) / 55
-              + textLength(part.printColor) / 55
-              + textLength(part.specialColor) / 70
-              + textLength(part.paperName) / 55
-              + textLength(part.processingDetails) / 85;
-          }, 0);
-
-          return sum
-            + textLength(job.jobName) / 45
-            + textLength(job.jobSheetSize) / 55
-            + textLength(job.bindingMethod) / 70
-            + partLoad;
-        }, 0));
-
-  const densityScore = (currentRowCount / (data.quotationType === 'single' ? 6 : 7)) + textLoad;
-  const layoutScale = clamp(1.3 - densityScore * 0.08, 0.82, 1.26);
-  const lineScale = clamp(1.13 - densityScore * 0.035, 0.86, 1.12);
-  const rowScale = clamp(1.12 - densityScore * 0.06, 0.64, 1.1);
-  const emptyRowCount = clamp(Math.round(2 - currentRowCount * 0.25 - textLoad * 0.5), 0, 2);
   const previewStyle = {
     '--layout-scale': layoutScale,
     '--layout-line-scale': lineScale,
@@ -121,52 +32,35 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
   } as React.CSSProperties;
 
   const getCompanyHeader = () => {
-    switch (data.companyId) {
-      case 'cai-xin':
-        return (
-          <>
-            <h1 className="company-name">彩鑫印刷事業股份有限公司</h1>
-            <div className="company-info" style={{ textAlign: 'center', fontSize: 'calc(11pt * var(--layout-scale))', marginTop: 'calc(10pt * var(--layout-row-scale))' }}>
-              <p>臺中市西屯區協和里工業區31路1之5號 &nbsp;&nbsp;&nbsp; TEL：04-23500296 &nbsp;&nbsp;&nbsp; FAX：04-23500288</p>
-            </div>
-          </>
-        );
-      case 'health':
-        return (
-          <>
-            <h1 className="company-name">赫爾思科技股份有限公司</h1>
-            <div className="company-info" style={{ textAlign: 'center', fontSize: 'calc(11pt * var(--layout-scale))', marginTop: 'calc(10pt * var(--layout-row-scale))' }}>
-              <p>臺中市西屯區何成里大祥街12號3樓 &nbsp;&nbsp;&nbsp; TEL：04-37031355</p>
-            </div>
-          </>
-        );
-      case 'li-xin':
-        return (
-          <>
-            <h1 className="company-name">栗鑫實業股份有限公司二廠</h1>
-            <div className="company-info" style={{ textAlign: 'center', fontSize: 'calc(11pt * var(--layout-scale))', marginTop: 'calc(10pt * var(--layout-row-scale))' }}>
-              <p>台中市西屯區工業31路1號 &nbsp;&nbsp;&nbsp; TEL：04-37031299 &nbsp;&nbsp;&nbsp; FAX：04-23599060</p>
-            </div>
-          </>
-        );
-      case 'jie-cai':
-      default:
-        return (
-          <>
-            <h1 className="company-name">捷 采 印 刷 事 業 (股) 公 司</h1>
-            <div className="company-info">
-              <p>總公司:台中市西屯區工業區31路1-1號 TEL:04-23580040  FAX:04-23580042</p>
-              <p>台北分公司:新北市永和區保生路1號17樓 TEL:02-25792911  FAX:02-25792771</p>
-              <p>台南分公司:台南市南區大成路二段10號 TEL:06-2613176  FAX:06-2613176</p>
-              <p>高雄分公司:高雄市三min區克武路139號 TEL:07-3852219  FAX:07-3962480</p>
-            </div>
-          </>
-        );
+    const company = companies[data.companyId] || companies['jie-cai'];
+    
+    if (data.companyId === 'jie-cai') {
+      return (
+        <>
+          <h1 className="company-name">{company.fullName}</h1>
+          <div className="company-info">
+            <p>總公司:台中市西屯區工業區31路1-1號 TEL:04-23580040  FAX:04-23580042</p>
+            <p>台北分公司:新北市永和區保生路1號17樓 TEL:02-25792911  FAX:02-25792771</p>
+            <p>台南分公司:台南市南區大成路二段10號 TEL:06-2613176  FAX:06-2613176</p>
+            <p>高雄分公司:高雄市三min區克武路139號 TEL:07-3852219  FAX:07-3962480</p>
+          </div>
+        </>
+      );
     }
+
+    return (
+      <>
+        <h1 className="company-name">{company.fullName}</h1>
+        <div className="company-info" style={{ textAlign: 'center', fontSize: 'calc(11pt * var(--layout-scale))', marginTop: 'calc(10pt * var(--layout-row-scale))' }}>
+          <p>{company.address} &nbsp;&nbsp;&nbsp; TEL：{company.phone} {company.fax && `&nbsp;&nbsp;&nbsp; FAX：${company.fax}`}</p>
+        </div>
+      </>
+    );
   };
 
   const getCompanyFooter = () => {
-    // 關鍵：使用 PNG 圖檔以實現真正的背景透明
+    const company = companies[data.companyId] || companies['jie-cai'];
+    
     const stampImg = (
       <div className="stamp-container">
         <img 
@@ -174,7 +68,6 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
           alt="發票章" 
           className="company-stamp"
           onError={(e) => {
-            // 如果 PNG 不存在，嘗試用 JPG
             const img = e.currentTarget;
             if (img.src.endsWith('.png')) {
               img.src = img.src.replace('.png', '.jpg');
@@ -186,57 +79,17 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
       </div>
     );
 
-    switch (data.companyId) {
-      case 'cai-xin':
-        return (
-          <div className="contract-party">
-            {stampImg}
-            <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：彩鑫印刷事業股份有限公司</p>
-            <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p>
-            <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：臺中市西屯區協和里工業區31路1之5號</p>
-            <p>統一編號：</p>
-            <p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：04-23500296 &nbsp;&nbsp; 傳真：04-23500288</p>
-            <p>業務代表：{data.salesName} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 行動電話：{data.salesMobile}</p>
-          </div>
-        );
-      case 'health':
-        return (
-          <div className="contract-party">
-            {stampImg}
-            <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：赫爾思科技股份有限公司</p>
-            <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p>
-            <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：臺中市西屯區何成里大祥街12號3樓</p>
-            <p>統一編號：</p>
-            <p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：04-37031355 &nbsp;&nbsp; 傳真：</p>
-            <p>業務代表：{data.salesName} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 行動電話：{data.salesMobile}</p>
-          </div>
-        );
-      case 'li-xin':
-        return (
-          <div className="contract-party">
-            {stampImg}
-            <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：栗鑫實業股份有限公司二廠</p>
-            <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：</p>
-            <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：台中市西屯區工業31路1號</p>
-            <p>統一編號：</p>
-            <p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：04-37031299 &nbsp;&nbsp; 傳真：04-23599060</p>
-            <p>業務代表：{data.salesName} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 行動電話：{data.salesMobile}</p>
-          </div>
-        );
-      case 'jie-cai':
-      default:
-        return (
-          <div className="contract-party">
-            {stampImg}
-            <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：捷采印刷事業(股)公司</p>
-            <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：傅 延 本</p>
-            <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：台中工業區31路1之1號</p>
-            <p>統一編號：23518409</p>
-            <p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：04-23580040 &nbsp;&nbsp; 傳真：04-23580042</p>
-            <p>業務代表：{data.salesName} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 行動電話：{data.salesMobile}</p>
-          </div>
-        );
-    }
+    return (
+      <div className="contract-party">
+        {stampImg}
+        <p>甲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方：{company.fullName}</p>
+        <p>法&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;代：{company.representative || ''}</p>
+        <p>住&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;址：{company.address}</p>
+        <p>統一編號：{company.taxId || ''}</p>
+        <p>電&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;話：{company.phone} &nbsp;&nbsp; {company.fax && `傳真：${company.fax}`}</p>
+        <p>業務代表：{data.salesName} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 行動電話：{data.salesMobile}</p>
+      </div>
+    );
   };
 
   return (
@@ -294,11 +147,11 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                 <td>{item.paperName}</td>
                 <td className="multi-line text-center">{item.processingDetails}</td>
                 <td className="text-center">{item.quantity ? `${item.quantity}${item.unit}` : ''}</td>
-                <td className="text-right">{item.unitPrice ? formatNumber(price) : ''}</td>
+                <td className="text-right">{item.unitPrice ? formatCurrency(price) : ''}</td>
                 <td className="text-right">
                   {amount > 0 ? (
                     <>
-                      {formatNumber(amount)}
+                      {formatCurrency(amount)}
                       <span style={{ fontSize: 'calc(8pt * var(--layout-scale))', marginLeft: '2pt', display: 'inline-block' }}>
                         {item.taxType === 'include' ? '(含稅)' : '(未稅)'}
                       </span>
@@ -324,11 +177,11 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   <td>&nbsp;</td>
                   <td className="multi-line text-center">{job.bindingMethod}</td>
                   <td rowSpan={totalRowsForJob} className="text-center">{job.quantity ? `${job.quantity}${job.unit}` : ''}</td>
-                  <td rowSpan={totalRowsForJob} className="text-right">{job.unitPrice ? formatNumber(parseFloat(job.unitPrice) || 0) : ''}</td>
+                  <td rowSpan={totalRowsForJob} className="text-right">{job.unitPrice ? formatCurrency(parseFloat(job.unitPrice) || 0) : ''}</td>
                   <td rowSpan={totalRowsForJob} className="text-right">
                     {amount > 0 ? (
                       <>
-                        {formatNumber(amount)}
+                        {formatCurrency(amount)}
                         <span style={{ fontSize: 'calc(8pt * var(--layout-scale))', marginLeft: '2pt', display: 'inline-block' }}>(未稅)</span>
                       </>
                     ) : ''}
@@ -374,15 +227,15 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
 
           <tr className="total-row">
             <td colSpan={5}>合計 (未稅)</td>
-            <td colSpan={3} className="text-right">{formatNumber(totalSubtotal)}</td>
+            <td colSpan={3} className="text-right">{formatCurrency(totalSubtotal)}</td>
           </tr>
           <tr className="total-row">
             <td colSpan={5}>營業稅 (5%)</td>
-            <td colSpan={3} className="text-right">{formatNumber(totalTax)}</td>
+            <td colSpan={3} className="text-right">{formatCurrency(totalTax)}</td>
           </tr>
           <tr className="total-row" style={{ fontSize: 'calc(14pt * var(--layout-scale))' }}>
             <td colSpan={5}>總計 (含稅)</td>
-            <td colSpan={3} className="text-right">{formatNumber(grandTotal)}</td>
+            <td colSpan={3} className="text-right">{formatCurrency(grandTotal)}</td>
           </tr>
         </tbody>
       </table>
