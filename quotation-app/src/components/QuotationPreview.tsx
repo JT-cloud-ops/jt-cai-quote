@@ -12,6 +12,9 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
   const day = today.getDate();
   const dateStr = `${year}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}`;
 
+  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+  const textLength = (value?: string) => (value?.trim().length ?? 0);
+
   // 當資料變更時，自動更新網頁標題
   React.useEffect(() => {
     const customer = data.customerName || '未命名客戶';
@@ -73,13 +76,57 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
     return 0;
   };
 
+  const currentRowCount = getCurrentRowCount() + (data.remarks ? 1 : 0);
+  const textLoad =
+    (textLength(data.customerName) + textLength(data.contactPerson) + textLength(data.phone) + textLength(data.mobile) + textLength(data.fax)) / 90 +
+    (textLength(data.paymentMethod) + textLength(data.deliveryLocation) + textLength(data.salesName) + textLength(data.salesMobile)) / 70 +
+    textLength(data.remarks) / 140 +
+    (data.quotationType === 'single'
+      ? data.items.reduce((sum, item) => {
+          return sum
+            + textLength(item.jobName) / 45
+            + textLength(item.sheetSize) / 55
+            + textLength(item.printColor) / 55
+            + textLength(item.specialColor) / 70
+            + textLength(item.paperName) / 55
+            + textLength(item.processingDetails) / 85;
+        }, 0)
+      : data.bookletJobs.reduce((sum, job) => {
+          const partLoad = job.parts.reduce((partSum, part) => {
+            return partSum
+              + textLength(part.partName) / 45
+              + textLength(part.sheetSize) / 55
+              + textLength(part.printColor) / 55
+              + textLength(part.specialColor) / 70
+              + textLength(part.paperName) / 55
+              + textLength(part.processingDetails) / 85;
+          }, 0);
+
+          return sum
+            + textLength(job.jobName) / 45
+            + textLength(job.jobSheetSize) / 55
+            + textLength(job.bindingMethod) / 70
+            + partLoad;
+        }, 0));
+
+  const densityScore = (currentRowCount / (data.quotationType === 'single' ? 8 : 9)) + textLoad;
+  const layoutScale = clamp(1.26 - densityScore * 0.04, 0.98, 1.26);
+  const lineScale = clamp(1.12 - densityScore * 0.015, 0.98, 1.12);
+  const rowScale = clamp(1.1 - densityScore * 0.03, 0.9, 1.1);
+  const emptyRowCount = clamp(Math.round(2 - currentRowCount * 0.25 - textLoad * 0.5), 0, 2);
+  const previewStyle = {
+    '--layout-scale': layoutScale,
+    '--layout-line-scale': lineScale,
+    '--layout-row-scale': rowScale,
+  } as React.CSSProperties;
+
   const getCompanyHeader = () => {
     switch (data.companyId) {
       case 'cai-xin':
         return (
           <>
             <h1 className="company-name">彩鑫印刷事業股份有限公司</h1>
-            <div className="company-info" style={{ textAlign: 'center', fontSize: '11pt', marginTop: '10pt' }}>
+            <div className="company-info" style={{ textAlign: 'center', fontSize: 'calc(11pt * var(--layout-scale))', marginTop: 'calc(10pt * var(--layout-row-scale))' }}>
               <p>臺中市西屯區協和里工業區31路1之5號 &nbsp;&nbsp;&nbsp; TEL：04-23500296 &nbsp;&nbsp;&nbsp; FAX：04-23500288</p>
             </div>
           </>
@@ -88,7 +135,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
         return (
           <>
             <h1 className="company-name">赫爾思科技股份有限公司</h1>
-            <div className="company-info" style={{ textAlign: 'center', fontSize: '11pt', marginTop: '10pt' }}>
+            <div className="company-info" style={{ textAlign: 'center', fontSize: 'calc(11pt * var(--layout-scale))', marginTop: 'calc(10pt * var(--layout-row-scale))' }}>
               <p>臺中市西屯區何成里大祥街12號3樓 &nbsp;&nbsp;&nbsp; TEL：04-37031355</p>
             </div>
           </>
@@ -97,7 +144,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
         return (
           <>
             <h1 className="company-name">栗鑫實業股份有限公司二廠</h1>
-            <div className="company-info" style={{ textAlign: 'center', fontSize: '11pt', marginTop: '10pt' }}>
+            <div className="company-info" style={{ textAlign: 'center', fontSize: 'calc(11pt * var(--layout-scale))', marginTop: 'calc(10pt * var(--layout-row-scale))' }}>
               <p>台中市西屯區工業31路1號 &nbsp;&nbsp;&nbsp; TEL：04-37031299 &nbsp;&nbsp;&nbsp; FAX：04-23599060</p>
             </div>
           </>
@@ -193,7 +240,8 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
   };
 
   return (
-    <div className="preview-container">
+    <div className="preview-container" style={previewStyle}>
+      <div className="preview-body">
       <div className="company-header">
         {getCompanyHeader()}
         <h2 className="main-title">報 價 單</h2>
@@ -209,16 +257,26 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
       </div>
       
       <table className="quotation-table-main">
+        <colgroup>
+          <col className="quote-col-job" />
+          <col className="quote-col-size" />
+          <col className="quote-col-color" />
+          <col className="quote-col-paper" />
+          <col className="quote-col-details" />
+          <col className="quote-col-quantity" />
+          <col className="quote-col-unit-price" />
+          <col className="quote-col-amount" />
+        </colgroup>
         <thead>
           <tr>
-            <th style={{ width: '15%' }}>印件名稱</th>
-            <th style={{ width: '10%' }}>開數</th>
-            <th style={{ width: '10%' }}>印色</th>
-            <th style={{ width: '15%' }}>用紙</th>
-            <th style={{ width: '20%' }}>其他明細</th>
-            <th style={{ width: '10%' }}>數量</th>
-            <th style={{ width: '10%' }}>單價</th>
-            <th style={{ width: '10%' }}>金額</th>
+            <th>印件名稱</th>
+            <th>開數</th>
+            <th>印色</th>
+            <th>用紙</th>
+            <th>其他明細</th>
+            <th>數量</th>
+            <th>單價</th>
+            <th>金額</th>
           </tr>
         </thead>
         <tbody>
@@ -241,7 +299,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   {amount > 0 ? (
                     <>
                       {formatNumber(amount)}
-                      <span style={{ fontSize: '8pt', marginLeft: '2pt', display: 'inline-block' }}>
+                      <span style={{ fontSize: 'calc(8pt * var(--layout-scale))', marginLeft: '2pt', display: 'inline-block' }}>
                         {item.taxType === 'include' ? '(含稅)' : '(未稅)'}
                       </span>
                     </>
@@ -264,14 +322,14 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   <td>{job.jobSheetSize}</td>
                   <td>&nbsp;</td>
                   <td>&nbsp;</td>
-                  <td className="text-center">{job.bindingMethod}</td>
+                  <td className="multi-line text-center">{job.bindingMethod}</td>
                   <td rowSpan={totalRowsForJob} className="text-center">{job.quantity ? `${job.quantity}${job.unit}` : ''}</td>
                   <td rowSpan={totalRowsForJob} className="text-right">{job.unitPrice ? formatNumber(parseFloat(job.unitPrice) || 0) : ''}</td>
                   <td rowSpan={totalRowsForJob} className="text-right">
                     {amount > 0 ? (
                       <>
                         {formatNumber(amount)}
-                        <span style={{ fontSize: '8pt', marginLeft: '2pt', display: 'inline-block' }}>(未稅)</span>
+                        <span style={{ fontSize: 'calc(8pt * var(--layout-scale))', marginLeft: '2pt', display: 'inline-block' }}>(未稅)</span>
                       </>
                     ) : ''}
                   </td>
@@ -280,7 +338,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   const hasData = [part.sheetSize, part.printColor, part.specialColor, part.paperName, part.processingDetails].some(val => val && val.trim() !== '');
                   return (
                     <tr key={part.id}>
-                      <td className="text-right" style={{ paddingRight: '10pt' }}>{hasData ? part.partName : '\u00A0'}</td>
+                      <td className="text-align-right" style={{ paddingRight: '10pt' }}>{hasData ? part.partName : '\u00A0'}</td>
                       <td>{part.sheetSize}</td>
                       <td>{part.printColor} {part.specialColor ? `(${part.specialColor})` : ''}</td>
                       <td>{part.paperName}</td>
@@ -301,7 +359,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
             );
           })}
 
-          {Array.from({ length: Math.max(0, 7 - getCurrentRowCount()) }).map((_, index) => (
+          {Array.from({ length: emptyRowCount }).map((_, index) => (
             <tr key={`empty-${index}`}>
               <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
             </tr>
@@ -322,7 +380,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
             <td colSpan={5}>營業稅 (5%)</td>
             <td colSpan={3} className="text-right">{formatNumber(totalTax)}</td>
           </tr>
-          <tr className="total-row" style={{ fontSize: '14pt' }}>
+          <tr className="total-row" style={{ fontSize: 'calc(14pt * var(--layout-scale))' }}>
             <td colSpan={5}>總計 (含稅)</td>
             <td colSpan={3} className="text-right">{formatNumber(grandTotal)}</td>
           </tr>
@@ -331,11 +389,27 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
 
       <div className="quotation-terms-grid">
         <div className="term-row">
-          <div className="term-item">印訂日期：{data.orderYear || '      '} 年 {data.orderMonth || '   '} 月 {data.orderDay || '   '} 日</div>
+          <div className="term-item date-term">
+            <span className="term-label">印訂日期：</span>
+            <span className="date-value date-year">{data.orderYear}</span>
+            <span className="date-unit">年</span>
+            <span className="date-value date-month">{data.orderMonth}</span>
+            <span className="date-unit">月</span>
+            <span className="date-value date-day">{data.orderDay}</span>
+            <span className="date-unit">日</span>
+          </div>
           <div className="term-item">付款辦法：{data.paymentMethod}</div>
         </div>
         <div className="term-row">
-          <div className="term-item">交貨日期：{data.deliveryYear || '      '} 年 {data.deliveryMonth || '   '} 月 {data.deliveryDay || '   '} 日</div>
+          <div className="term-item date-term">
+            <span className="term-label">交貨日期：</span>
+            <span className="date-value date-year">{data.deliveryYear}</span>
+            <span className="date-unit">年</span>
+            <span className="date-value date-month">{data.deliveryMonth}</span>
+            <span className="date-unit">月</span>
+            <span className="date-value date-day">{data.deliveryDay}</span>
+            <span className="date-unit">日</span>
+          </div>
           <div className="term-item">交貨地點：{data.deliveryLocation}</div>
         </div>
       </div>
@@ -360,6 +434,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
         </div>
         <div className="doc-footer"><span>JT-QRP-S01-01A1</span><span>保存年限：2年</span></div>
       </div>
+    </div>
     </div>
   );
 };

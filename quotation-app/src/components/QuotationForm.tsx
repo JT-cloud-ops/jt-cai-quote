@@ -246,7 +246,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
       try {
         const importedData = JSON.parse(event.target?.result as string);
         if (importedData) { onChange(importedData); alert('匯入成功！'); }
-      } catch (err) { alert('解析失敗'); }
+      } catch { alert('解析失敗'); }
       e.target.value = '';
     };
     reader.readAsText(file);

@@ -9,6 +9,17 @@
   border: 1px solid #ddd;
   margin: 20px auto;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  --layout-scale: 1;
+  --layout-line-scale: 1;
+  --layout-row-scale: 1;
+}
+
+.preview-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
 }
 
 .company-header {
@@ -19,21 +30,21 @@
 }
 
 .company-name {
-  font-size: 20pt;
+  font-size: calc(20pt * var(--layout-scale));
   margin: 0;
   font-weight: bold;
 }
 
 .main-title {
-  font-size: 24pt;
-  margin: 10pt 0 0 0;
-  letter-spacing: 15pt;
+  font-size: calc(24pt * var(--layout-scale));
+  margin: calc(10pt * var(--layout-row-scale)) 0 0 0;
+  letter-spacing: calc(15pt * var(--layout-scale));
   text-decoration: underline;
 }
 
 .company-info {
-  font-size: 9pt;
-  margin-top: 5pt;
+  font-size: calc(9pt * var(--layout-scale));
+  margin-top: calc(5pt * var(--layout-row-scale));
 }
 
 .company-info p {
@@ -43,19 +54,19 @@
 .quotation-meta-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10pt;
-  margin-bottom: 1rem;
+  gap: calc(10pt * var(--layout-row-scale));
+  margin-bottom: calc(1rem * var(--layout-row-scale));
 }
 
 .meta-item {
   display: flex;
   border-bottom: 1px solid #000;
-  padding: 2pt 0;
+  padding: calc(2pt * var(--layout-row-scale)) 0;
 }
 
 .meta-item .label {
   font-weight: bold;
-  width: 80pt;
+  width: calc(80pt * var(--layout-scale));
 }
 
 .meta-item .value {
@@ -65,16 +76,26 @@
 .quotation-table-main {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 1rem;
+  margin-bottom: calc(0.6rem * var(--layout-row-scale));
   table-layout: fixed;
 }
+
+.quote-col-job { width: 15%; }
+.quote-col-size { width: 8%; }
+.quote-col-color { width: 8%; }
+.quote-col-paper { width: 16%; }
+.quote-col-details { width: 23%; }
+.quote-col-quantity { width: 9%; }
+.quote-col-unit-price { width: 7%; }
+.quote-col-amount { width: 14%; }
 
 .quotation-table-main th, 
 .quotation-table-main td {
   border: 1px solid #000;
-  padding: 4pt 2pt;
-  font-size: 9pt;
-  word-break: break-all;
+  padding: calc(4pt * var(--layout-row-scale)) calc(2pt * var(--layout-row-scale));
+  font-size: calc(9pt * var(--layout-scale));
+  word-break: normal;
+  overflow-wrap: anywhere;
 }
 
 .quotation-table-main th {
@@ -83,11 +104,15 @@
 }
 
 .quotation-table-main td {
-  height: 25pt;
+  height: calc(34pt * var(--layout-row-scale));
 }
 
 .text-center {
   text-align: center;
+}
+
+.quotation-table-main td.text-center {
+  white-space: nowrap;
 }
 
 .text-right {
@@ -95,9 +120,25 @@
   padding-right: 4pt !important;
 }
 
+.text-align-right {
+  text-align: right;
+}
+
+.quotation-table-main td.text-right {
+  white-space: nowrap;
+}
+
 .multi-line {
   white-space: pre-wrap;
-  vertical-align: top;
+  vertical-align: middle;
+}
+
+.quotation-table-main td.multi-line {
+  white-space: pre-wrap;
+  vertical-align: middle;
+  text-align: center;
+  word-break: break-all;
+  line-height: 1.4;
 }
 
 .total-row {
@@ -107,17 +148,17 @@
 }
 
 .quotation-terms-grid {
-  margin-top: 10pt;
-  margin-bottom: 10pt;
-  font-size: 11pt;
+  margin-top: calc(10pt * var(--layout-row-scale));
+  margin-bottom: calc(10pt * var(--layout-row-scale));
+  font-size: calc(11pt * var(--layout-scale));
 }
 
 .term-row {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
-  margin-bottom: 5pt;
+  margin-bottom: calc(5pt * var(--layout-row-scale));
   border-bottom: 1px dotted #ccc;
-  padding-bottom: 3pt;
+  padding-bottom: calc(3pt * var(--layout-row-scale));
 }
 
 .term-item {
@@ -125,18 +166,51 @@
   align-items: center;
 }
 
+.date-term {
+  gap: 4pt;
+  white-space: nowrap;
+}
+
+.term-label {
+  flex: 0 0 auto;
+}
+
+.date-value {
+  display: inline-block;
+  min-height: 1em;
+  border-bottom: 1px solid transparent;
+  text-align: center;
+}
+
+.date-year {
+  min-width: 42pt;
+}
+
+.date-month,
+.date-day {
+  min-width: 24pt;
+}
+
+.date-unit {
+  flex: 0 0 auto;
+}
+
 .quotation-footer-section {
-  margin-top: 1rem;
+  margin-top: auto;
+  padding-top: calc(2pt * var(--layout-row-scale));
+  display: flex;
+  flex-direction: column;
+  gap: calc(2pt * var(--layout-row-scale));
 }
 
 .notice {
-  font-size: 9pt;
-  line-height: 1.4;
+  font-size: calc(9pt * var(--layout-scale));
+  line-height: calc(1.4 * var(--layout-line-scale));
 }
 
 .notice p {
   font-weight: bold;
-  margin-bottom: 2pt;
+  margin-bottom: calc(2pt * var(--layout-row-scale));
 }
 
 .notice ol {
@@ -151,7 +225,7 @@
 
 .custom-notice-list li {
   counter-increment: notice-counter;
-  margin-bottom: 4pt;
+  margin-bottom: calc(4pt * var(--layout-row-scale));
   display: flex;
 }
 
@@ -162,22 +236,22 @@
 }
 
 .contract-section {
-  margin-top: 15pt;
+  margin-top: 0;
   border-top: 1px solid #000;
-  padding-top: 10pt;
+  padding-top: calc(4pt * var(--layout-row-scale));
 }
 
 .contract-title {
   font-weight: bold;
-  font-size: 12pt;
-  margin-bottom: 8pt;
+  font-size: calc(12pt * var(--layout-scale));
+  margin-bottom: calc(4pt * var(--layout-row-scale));
   text-decoration: underline;
 }
 
 .contract-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20pt;
+  gap: calc(12pt * var(--layout-row-scale));
 }
 
 /* 文字層級設為高，確保在印章之上 */
@@ -186,9 +260,9 @@
 }
 
 .contract-party p {
-  margin: 4pt 0;
-  font-size: 10pt;
-  line-height: 1.4;
+  margin: calc(4pt * var(--layout-row-scale)) 0;
+  font-size: calc(10pt * var(--layout-scale));
+  line-height: calc(1.4 * var(--layout-line-scale));
   position: relative;
   z-index: 10;
 }
@@ -219,10 +293,10 @@
 }
 
 .doc-footer {
-  margin-top: 20pt;
+  margin-top: calc(6pt * var(--layout-row-scale));
   display: flex;
   justify-content: space-between;
-  font-size: 8pt;
+  font-size: calc(8pt * var(--layout-scale));
   color: #333;
 }
 
@@ -242,12 +316,16 @@
   .preview-container {
     border: none !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 0.2cm 0.2cm !important;
     width: 100% !important;
     box-shadow: none !important;
     min-height: 0 !important;
     height: auto !important;
-    font-size: 9pt;
+    font-size: calc(10pt * var(--layout-scale));
+  }
+
+  .preview-body {
+    min-height: 0;
   }
 
   .no-print {
@@ -270,17 +348,17 @@
   }
 
   .company-name {
-    font-size: 16pt;
+    font-size: calc(16pt * var(--layout-scale));
   }
 
   .main-title {
-    font-size: 18pt;
+    font-size: calc(18pt * var(--layout-scale));
     margin-top: 0;
-    letter-spacing: 8pt;
+    letter-spacing: calc(8pt * var(--layout-scale));
   }
 
   .company-info {
-    font-size: 7pt;
+    font-size: calc(8pt * var(--layout-scale));
     margin-top: 2pt;
   }
 
@@ -296,62 +374,88 @@
 
   .meta-item {
     padding: 0;
-    font-size: 8pt;
+    font-size: calc(9.5pt * var(--layout-scale));
   }
 
   .quotation-table-main th, 
   .quotation-table-main td {
     padding: 2pt !important;
-    font-size: 8pt !important;
-    height: auto !important;
-    line-height: 1.1;
+    font-size: calc(9.5pt * var(--layout-scale)) !important;
+    height: calc(24pt * var(--layout-row-scale)) !important;
+    line-height: calc(1.16 * var(--layout-line-scale));
   }
 
   .quotation-terms-grid {
-    margin-top: 2pt;
-    margin-bottom: 2pt;
-    font-size: 8pt;
+    margin-top: 6pt;
+    margin-bottom: 6pt;
+    font-size: calc(10pt * var(--layout-scale));
   }
 
   .term-row {
-    margin-bottom: 1pt;
-    padding-bottom: 0;
+    margin-bottom: 3pt;
+    padding-bottom: 2pt;
+  }
+
+  .date-term {
+    gap: 5pt;
+  }
+
+  .date-year {
+    min-width: 46pt;
+  }
+
+  .date-month,
+  .date-day {
+    min-width: 28pt;
   }
 
   .notice {
-    font-size: 7pt;
-    line-height: 1.1;
+    font-size: calc(8.2pt * var(--layout-scale));
+    line-height: 1.16;
   }
 
   .notice p {
-    margin-bottom: 0;
+    margin-bottom: 1pt;
   }
 
   .custom-notice-list li {
     margin-bottom: 1pt;
   }
 
+  .quotation-footer-section {
+    margin-top: auto;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   .contract-section {
-    margin-top: 3pt;
+    margin-top: 2pt;
+    border-top: none;
     padding-top: 2pt;
   }
 
   .contract-party p {
-    margin: 1pt 0;
-    font-size: 8pt;
-    line-height: 1.1;
+    margin: 0.5pt 0;
+    font-size: calc(8.2pt * var(--layout-scale));
+    line-height: calc(1.08 * var(--layout-line-scale));
   }
 
   .doc-footer {
-    margin-top: 2pt;
+    margin-top: 0;
   }
 
   .contract-title {
-    font-size: 9pt;
-    margin-bottom: 2pt;
+    font-size: calc(9pt * var(--layout-scale));
+    margin-bottom: 1pt;
   }
 
   .quotation-table-main tr {
     page-break-inside: avoid;
+  }
+
+  .quotation-table-main td.multi-line {
+    vertical-align: middle !important;
+    text-align: center !important;
+    line-height: 1.22 !important;
   }
 }
