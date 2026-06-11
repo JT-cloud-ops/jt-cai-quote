@@ -8,7 +8,7 @@ const previewCss = readFileSync(new URL('../src/styles/Preview.css', import.meta
 const checks = [
   {
     name: 'JPG export button uses clear transfer wording',
-    pass: form.includes("轉存圖檔 (JPG)"),
+    pass: form.includes("儲存圖片 (JPG)"),
   },
   {
     name: 'JPG export button keeps a green visual treatment',
