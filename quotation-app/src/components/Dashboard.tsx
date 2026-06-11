@@ -28,7 +28,7 @@ const Dashboard: React.FC<Props> = ({ companyId, salesName, salesMobile, onCompa
   return (
     <div className="dashboard-container" onKeyDown={handleKeyDown}>
       <header className="dashboard-header">
-        <h1>報價系統主選單</h1>
+        <h1>報價系統主選單 <small style={{ fontSize: '0.8rem', color: '#999' }}>v1.1</small></h1>
       </header>
 
       <section className="company-selection-box">
