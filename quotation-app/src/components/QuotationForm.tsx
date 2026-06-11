@@ -352,7 +352,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
         <button className="save-btn" onClick={() => saveToHistory()}>儲存此報價單</button>
         <button className="print-button" onClick={handlePrint}>列印報價單 (PDF)</button>
         <button className="share-btn" onClick={shareToLine} disabled={isGeneratingImg}>
-          {isGeneratingImg ? '轉存中...' : '轉存圖檔 (JPG)'}
+          {isGeneratingImg ? '處理中...' : '儲存圖片 (JPG)'}
         </button>
       </div>
     </div>
