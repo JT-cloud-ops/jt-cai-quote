@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build",
     "build:windows": "pushd \"%CD%\" && npm run build",
     "lint": "eslint .",
+    "test:print-layout": "node scripts/verify-print-layout.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

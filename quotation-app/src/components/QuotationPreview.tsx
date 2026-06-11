@@ -109,10 +109,10 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
             + partLoad;
         }, 0));
 
-  const densityScore = (currentRowCount / (data.quotationType === 'single' ? 8 : 9)) + textLoad;
-  const layoutScale = clamp(1.26 - densityScore * 0.04, 0.98, 1.26);
-  const lineScale = clamp(1.12 - densityScore * 0.015, 0.98, 1.12);
-  const rowScale = clamp(1.1 - densityScore * 0.03, 0.9, 1.1);
+  const densityScore = (currentRowCount / (data.quotationType === 'single' ? 6 : 7)) + textLoad;
+  const layoutScale = clamp(1.3 - densityScore * 0.08, 0.82, 1.26);
+  const lineScale = clamp(1.13 - densityScore * 0.035, 0.86, 1.12);
+  const rowScale = clamp(1.12 - densityScore * 0.06, 0.64, 1.1);
   const emptyRowCount = clamp(Math.round(2 - currentRowCount * 0.25 - textLoad * 0.5), 0, 2);
   const previewStyle = {
     '--layout-scale': layoutScale,

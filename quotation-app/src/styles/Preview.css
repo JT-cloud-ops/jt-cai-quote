@@ -334,7 +334,7 @@
 
   .contract-section, .contract-grid {
     overflow: visible !important;
-    page-break-inside: avoid;
+    page-break-inside: auto;
   }
 
   /* 確保印章容器在列印時不被裁切 */
@@ -379,9 +379,9 @@
 
   .quotation-table-main th, 
   .quotation-table-main td {
-    padding: 2pt !important;
+    padding: calc(1.5pt * var(--layout-row-scale)) 2pt !important;
     font-size: calc(9.5pt * var(--layout-scale)) !important;
-    height: calc(24pt * var(--layout-row-scale)) !important;
+    height: calc(22pt * var(--layout-row-scale)) !important;
     line-height: calc(1.16 * var(--layout-line-scale));
   }
 
@@ -424,8 +424,8 @@
 
   .quotation-footer-section {
     margin-top: auto;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-inside: auto;
+    page-break-inside: auto;
   }
 
   .contract-section {
