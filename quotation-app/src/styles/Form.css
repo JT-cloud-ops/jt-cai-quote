@@ -244,7 +244,11 @@
   transition: all 0.2s;
 }
 
-.share-btn {
+.save-btn:hover {
+  background: #f0f7ff;
+}
+
+.export-img-btn {
   width: 100%;
   padding: 1rem;
   background: linear-gradient(135deg, #00b900 0%, #008f00 100%);
@@ -258,14 +262,10 @@
   transition: transform 0.1s, box-shadow 0.1s, opacity 0.2s;
 }
 
-.share-btn:hover {
+.export-img-btn:hover {
   opacity: 0.9;
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(0, 185, 0, 0.36);
-}
-
-.save-btn:hover {
-  background: #f0f7ff;
 }
 
 .print-button {
