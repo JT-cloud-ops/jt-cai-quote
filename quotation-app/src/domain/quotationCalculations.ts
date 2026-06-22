@@ -86,6 +86,7 @@ export const calculateDensityScore = (data: QuotationData): number => {
             + textLength(item.jobName) / 45
             + textLength(item.sheetSize) / 55
             + textLength(item.printColor) / 55
+            + textLength(item.reverseColor) / 55
             + textLength(item.specialColor) / 70
             + textLength(item.paperName) / 55
             + textLength(item.processingDetails) / 85;
@@ -96,6 +97,7 @@ export const calculateDensityScore = (data: QuotationData): number => {
               + textLength(part.partName) / 45
               + textLength(part.sheetSize) / 55
               + textLength(part.printColor) / 55
+              + textLength(part.reverseColor) / 55
               + textLength(part.specialColor) / 70
               + textLength(part.paperName) / 55
               + textLength(part.processingDetails) / 85;

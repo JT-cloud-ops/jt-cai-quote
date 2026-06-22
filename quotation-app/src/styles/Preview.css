@@ -111,10 +111,6 @@
   text-align: center;
 }
 
-.quotation-table-main td.text-center {
-  white-space: nowrap;
-}
-
 .text-right {
   text-align: right;
   padding-right: 4pt !important;
@@ -124,13 +120,26 @@
   text-align: right;
 }
 
-.quotation-table-main td.text-right {
-  white-space: nowrap;
-}
-
 .multi-line {
   white-space: pre-wrap;
   vertical-align: middle;
+}
+
+.quotation-table-main td.quote-cell-center-wrap {
+  text-align: center;
+  vertical-align: middle;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.quotation-table-main td.quote-part-name-cell {
+  text-align: right;
+  vertical-align: middle;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .quotation-table-main td.multi-line {

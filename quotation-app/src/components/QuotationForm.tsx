@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { QuotationData, Customer } from '../types';
+import type { QuotationData, Customer, QuotationItem, BookletPart } from '../types';
 import SingleSheetForm from './forms/SingleSheetForm';
 import BookletForm from './forms/BookletForm';
 import html2canvas from 'html2canvas';
@@ -61,8 +61,14 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     onChange({ ...data, items: newItems });
   };
 
+  const handleItemFieldChange = (index: number, fieldName: keyof QuotationItem, value: string) => {
+    const newItems = [...data.items];
+    newItems[index] = { ...newItems[index], [fieldName]: value };
+    onChange({ ...data, items: newItems });
+  };
+
   const addItem = () => {
-    onChange({ ...data, items: [...data.items, { id: generateId(), jobName: '', sheetSize: '', printColor: '', specialColor: '', paperName: '', processingDetails: '', quantity: '', unit: '份', unitPrice: '', taxType: 'exclude', manualAmount: '' }] });
+    onChange({ ...data, items: [...data.items, { id: generateId(), jobName: '', sheetSize: '', printColor: '', reverseColor: '', specialColor: '', paperName: '', processingDetails: '', quantity: '', unit: '份', unitPrice: '', taxType: 'exclude', manualAmount: '' }] });
   };
 
   const removeItem = (index: number) => {
@@ -82,9 +88,15 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     onChange({ ...data, bookletJobs: newJobs });
   };
 
+  const handleBookletPartFieldChange = (jobIndex: number, partIndex: number, fieldName: keyof BookletPart, value: string) => {
+    const newJobs = [...data.bookletJobs];
+    newJobs[jobIndex].parts[partIndex] = { ...newJobs[jobIndex].parts[partIndex], [fieldName]: value };
+    onChange({ ...data, bookletJobs: newJobs });
+  };
+
   const addBookletPart = (jobIndex: number) => {
     const newJobs = [...data.bookletJobs];
-    newJobs[jobIndex].parts.push({ id: generateId(), partName: '', sheetSize: '', printColor: '', specialColor: '', paperName: '', processingDetails: '' });
+    newJobs[jobIndex].parts.push({ id: generateId(), partName: '', sheetSize: '', printColor: '', reverseColor: '', specialColor: '', paperName: '', processingDetails: '' });
     onChange({ ...data, bookletJobs: newJobs });
   };
 
@@ -336,9 +348,23 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
       </div>
 
       {data.quotationType === 'single' ? (
-        <SingleSheetForm items={data.items} onChange={handleItemChange} onAdd={addItem} onRemove={removeItem} />
+        <SingleSheetForm
+          items={data.items}
+          onChange={handleItemChange}
+          onFieldChange={handleItemFieldChange}
+          onAdd={addItem}
+          onRemove={removeItem}
+        />
       ) : (
-        <BookletForm jobs={data.bookletJobs} isDept={data.quotationType === 'dept'} onJobChange={handleBookletJobChange} onPartChange={handleBookletPartChange} onAddPart={addBookletPart} onRemovePart={removeBookletPart} />
+        <BookletForm
+          jobs={data.bookletJobs}
+          isDept={data.quotationType === 'dept'}
+          onJobChange={handleBookletJobChange}
+          onPartChange={handleBookletPartChange}
+          onPartFieldChange={handleBookletPartFieldChange}
+          onAddPart={addBookletPart}
+          onRemovePart={removeBookletPart}
+        />
       )}
 
       <div className="section-title">其他條款</div>

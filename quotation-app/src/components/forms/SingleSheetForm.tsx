@@ -1,54 +1,63 @@
 import React from 'react';
 import type { QuotationItem } from '../../types';
+import PrintColorFields from './PrintColorFields';
 
 interface Props {
   items: QuotationItem[];
   onChange: (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onFieldChange: (index: number, fieldName: keyof QuotationItem, value: string) => void;
   onAdd: () => void;
   onRemove: (index: number) => void;
 }
 
-const SingleSheetForm: React.FC<Props> = ({ items, onChange, onAdd, onRemove }) => {
+const SingleSheetForm: React.FC<Props> = ({ items, onChange, onFieldChange, onAdd, onRemove }) => {
   return (
     <>
-      <div className="section-title">印件品項</div>
+      <div className="section-title">單張項目</div>
       {items.map((item, index) => {
+        const showSheetWarning = item.sheetSize.trim() === '';
+
         return (
           <div key={item.id} className="item-form-box">
             <div className="item-header">
               <span>項目 {index + 1}</span>
               {items.length > 1 && <button className="remove-btn" onClick={() => onRemove(index)}>刪除</button>}
             </div>
+
             <div className="form-group">
               <label>印件名稱</label>
               <input type="text" name="jobName" value={item.jobName} onChange={(e) => onChange(index, e)} />
             </div>
-            <div className="form-row">
-              <div className="form-group"><label>開數</label><input type="text" name="sheetSize" value={item.sheetSize} onChange={(e) => onChange(index, e)} /></div>
-              <div className="form-group">
-                <label>印色 / 特別色</label>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <input type="text" name="printColor" value={item.printColor} onChange={(e) => onChange(index, e)} placeholder="印色" style={{ flex: 1 }} />
-                  <input type="text" name="specialColor" value={item.specialColor} onChange={(e) => onChange(index, e)} placeholder="特別色" style={{ flex: 1 }} />
-                </div>
+
+            <div className="form-row print-color-layout">
+              <div className="print-color-control print-size-control">
+                <span>開數</span>
+                <input type="text" name="sheetSize" value={item.sheetSize} onChange={(e) => onChange(index, e)} />
               </div>
+              <PrintColorFields
+                frontColor={item.printColor ?? ''}
+                reverseColor={item.reverseColor ?? ''}
+                specialColor={item.specialColor ?? ''}
+                onColorChange={(fieldName, value) => onFieldChange(index, fieldName, value)}
+              />
             </div>
-            <div className="form-group"><label>用紙名稱</label><input type="text" name="paperName" value={item.paperName} onChange={(e) => onChange(index, e)} /></div>
-            <div className="form-group"><label>加工內容</label><textarea name="processingDetails" value={item.processingDetails} onChange={(e) => onChange(index, e)} rows={2} /></div>
-            
+            {showSheetWarning && <div className="field-warning booklet-sheet-warning">沒有開數時請輸入成品公分數</div>}
+
+            <div className="form-group">
+              <label>用紙名稱</label>
+              <input type="text" name="paperName" value={item.paperName} onChange={(e) => onChange(index, e)} />
+            </div>
+            <div className="form-group">
+              <label>其他明細</label>
+              <textarea name="processingDetails" value={item.processingDetails} onChange={(e) => onChange(index, e)} rows={2} />
+            </div>
+
             <div className="form-row">
               <div className="form-group">
                 <label>數量 / 單位</label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <input type="text" name="quantity" value={item.quantity} onChange={(e) => onChange(index, e)} style={{ flex: 1 }} />
-                  <input 
-                    type="text" 
-                    name="unit" 
-                    value={item.unit} 
-                    onChange={(e) => onChange(index, e)} 
-                    placeholder="單位"
-                    style={{ width: '80px' }} 
-                  />
+                  <input type="text" name="unit" value={item.unit} onChange={(e) => onChange(index, e)} placeholder="單位" style={{ width: '80px' }} />
                 </div>
               </div>
               <div className="form-group">
@@ -65,13 +74,13 @@ const SingleSheetForm: React.FC<Props> = ({ items, onChange, onAdd, onRemove }) 
 
             <div className="form-group">
               <label>小計金額 (手動輸入優先)</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="manualAmount"
-                value={item.manualAmount} 
+                value={item.manualAmount}
                 onChange={(e) => onChange(index, e)}
                 placeholder="若不輸入則自動計算 (數量x單價)"
-                style={{ fontWeight: 'bold', borderColor: item.manualAmount ? '#646cff' : '#ccc' }} 
+                style={{ fontWeight: 'bold', borderColor: item.manualAmount ? '#646cff' : '#ccc' }}
               />
               <p style={{ fontSize: '0.8rem', color: '#888', margin: '4pt 0 0 0' }}>
                 * 若有輸入，則報價單將以此金額為準。
@@ -80,7 +89,7 @@ const SingleSheetForm: React.FC<Props> = ({ items, onChange, onAdd, onRemove }) 
           </div>
         );
       })}
-      <button className="add-btn" onClick={onAdd}>+ 新增品項</button>
+      <button className="add-btn" onClick={onAdd}>+ 新增項目</button>
     </>
   );
 };

@@ -4,6 +4,7 @@ import { calculateTotals, calculateDensityScore, getLayoutScales, calculateEmpty
 import { companies } from '../config/companies';
 import { formatCurrency } from '../shared/utils/formatCurrency';
 import { getMinguoDateInfo } from '../shared/utils/dateUtils';
+import { formatPrintColor } from '../shared/utils/printColor';
 
 interface Props {
   data: QuotationData;
@@ -141,14 +142,14 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
             
             return (
               <tr key={item.id}>
-                <td>{item.jobName}</td>
-                <td>{item.sheetSize}</td>
-                <td>{item.printColor} {item.specialColor ? `(${item.specialColor})` : ''}</td>
-                <td>{item.paperName}</td>
-                <td className="multi-line text-center">{item.processingDetails}</td>
-                <td className="text-center">{item.quantity ? `${item.quantity}${item.unit}` : ''}</td>
-                <td className="text-right">{item.unitPrice ? formatCurrency(price) : ''}</td>
-                <td className="text-right">
+                <td className="quote-cell-center-wrap">{item.jobName}</td>
+                <td className="quote-cell-center-wrap">{item.sheetSize}</td>
+                <td className="quote-cell-center-wrap">{formatPrintColor(item.printColor, item.reverseColor, item.specialColor)}</td>
+                <td className="quote-cell-center-wrap">{item.paperName}</td>
+                <td className="quote-cell-center-wrap multi-line">{item.processingDetails}</td>
+                <td className="quote-cell-center-wrap">{item.quantity ? `${item.quantity}${item.unit}` : ''}</td>
+                <td className="quote-cell-center-wrap">{item.unitPrice ? formatCurrency(price) : ''}</td>
+                <td className="quote-cell-center-wrap">
                   {amount > 0 ? (
                     <>
                       {formatCurrency(amount)}
@@ -171,14 +172,14 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
             return (
               <React.Fragment key={job.id}>
                 <tr>
-                  <td style={{ fontWeight: 'bold' }}>{job.jobName}</td>
-                  <td>{job.jobSheetSize}</td>
-                  <td>&nbsp;</td>
-                  <td>&nbsp;</td>
-                  <td className="multi-line text-center">{job.bindingMethod}</td>
-                  <td rowSpan={totalRowsForJob} className="text-center">{job.quantity ? `${job.quantity}${job.unit}` : ''}</td>
-                  <td rowSpan={totalRowsForJob} className="text-right">{job.unitPrice ? formatCurrency(parseFloat(job.unitPrice) || 0) : ''}</td>
-                  <td rowSpan={totalRowsForJob} className="text-right">
+                  <td className="quote-cell-center-wrap" style={{ fontWeight: 'bold' }}>{job.jobName}</td>
+                  <td className="quote-cell-center-wrap">{job.jobSheetSize}</td>
+                  <td className="quote-cell-center-wrap">&nbsp;</td>
+                  <td className="quote-cell-center-wrap">&nbsp;</td>
+                  <td className="quote-cell-center-wrap multi-line">{job.bindingMethod}</td>
+                  <td rowSpan={totalRowsForJob} className="quote-cell-center-wrap">{job.quantity ? `${job.quantity}${job.unit}` : ''}</td>
+                  <td rowSpan={totalRowsForJob} className="quote-cell-center-wrap">{job.unitPrice ? formatCurrency(parseFloat(job.unitPrice) || 0) : ''}</td>
+                  <td rowSpan={totalRowsForJob} className="quote-cell-center-wrap">
                     {amount > 0 ? (
                       <>
                         {formatCurrency(amount)}
@@ -188,23 +189,23 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
                   </td>
                 </tr>
                 {job.parts.map((part) => {
-                  const hasData = [part.sheetSize, part.printColor, part.specialColor, part.paperName, part.processingDetails].some(val => val && val.trim() !== '');
+                  const hasData = [part.sheetSize, part.printColor, part.reverseColor, part.specialColor, part.paperName, part.processingDetails].some(val => val && val.trim() !== '');
                   return (
                     <tr key={part.id}>
-                      <td className="text-align-right" style={{ paddingRight: '10pt' }}>{hasData ? part.partName : '\u00A0'}</td>
-                      <td>{part.sheetSize}</td>
-                      <td>{part.printColor} {part.specialColor ? `(${part.specialColor})` : ''}</td>
-                      <td>{part.paperName}</td>
-                      <td className="multi-line text-center">{part.processingDetails}</td>
+                      <td className="quote-part-name-cell" style={{ paddingRight: '10pt' }}>{hasData ? part.partName : '\u00A0'}</td>
+                      <td className="quote-cell-center-wrap">{part.sheetSize}</td>
+                      <td className="quote-cell-center-wrap">{formatPrintColor(part.printColor, part.reverseColor, part.specialColor)}</td>
+                      <td className="quote-cell-center-wrap">{part.paperName}</td>
+                      <td className="quote-cell-center-wrap multi-line">{part.processingDetails}</td>
                     </tr>
                   );
                 })}
                 {hasHQ && (
                   <tr>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
+                    <td className="quote-cell-center-wrap">&nbsp;</td>
+                    <td className="quote-cell-center-wrap">&nbsp;</td>
+                    <td className="quote-cell-center-wrap">&nbsp;</td>
+                    <td className="quote-cell-center-wrap">&nbsp;</td>
                     <td className="multi-line text-center" style={{ fontWeight: 'bold' }}>總公司量：{job.hqQuantity}{job.unit}</td>
                   </tr>
                 )}
