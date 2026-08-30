@@ -76,10 +76,21 @@ export const calculateDensityScore = (data: QuotationData): number => {
   };
 
   const currentRowCount = getCurrentRowCount() + (data.remarks ? 1 : 0);
+  const partyBTextLoad = (
+    textLength(data.partyB?.name)
+    + textLength(data.partyB?.representative)
+    + textLength(data.partyB?.address)
+    + textLength(data.partyB?.taxId)
+    + textLength(data.partyB?.phone)
+    + textLength(data.partyB?.fax)
+    + textLength(data.partyB?.contactPerson)
+    + textLength(data.partyB?.mobile)
+  ) / 100;
   const textLoad =
     (textLength(data.customerName) + textLength(data.contactPerson) + textLength(data.phone) + textLength(data.mobile) + textLength(data.fax)) / 90 +
     (textLength(data.paymentMethod) + textLength(data.deliveryLocation) + textLength(data.salesName) + textLength(data.salesMobile)) / 70 +
     textLength(data.remarks) / 140 +
+    partyBTextLoad +
     (data.quotationType === 'single'
       ? data.items.reduce((sum, item) => {
           return sum

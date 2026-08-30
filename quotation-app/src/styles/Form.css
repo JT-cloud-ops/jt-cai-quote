@@ -415,7 +415,8 @@
 }
 
 /* 客戶資料庫下拉選單樣式 */
-.customer-dropdown {
+.customer-dropdown,
+.party-b-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
@@ -429,18 +430,21 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-.customer-option {
+.customer-option,
+.party-b-option {
   padding: 0.8rem;
   border-bottom: 1px solid #eee;
   cursor: pointer;
   transition: background 0.2s;
 }
 
-.customer-option:hover {
+.customer-option:hover,
+.party-b-option:hover {
   background: #f0f7ff;
 }
 
-.customer-option:last-child {
+.customer-option:last-child,
+.party-b-option:last-child {
   border-bottom: none;
 }
 

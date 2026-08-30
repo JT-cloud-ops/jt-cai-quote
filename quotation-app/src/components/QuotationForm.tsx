@@ -1,46 +1,53 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { QuotationData, Customer, QuotationItem, BookletPart } from '../types';
+import type { QuotationData, Customer, Party, QuotationItem, BookletPart } from '../types';
 import SingleSheetForm from './forms/SingleSheetForm';
 import BookletForm from './forms/BookletForm';
-import html2canvas from 'html2canvas';
+import { normalizePartyB, normalizeQuotationData, upsertPartyBRecord } from '../domain/partyB';
+import { formatValidationErrors, parseQuotationJson } from '../domain/quotationValidation';
+import { useLineShare } from '../hooks/useLineShare';
+import { initLiff, isLiffClient } from '../shared/utils/liff';
+import HistoryPanel from './HistoryPanel';
+import CustomerFields from './CustomerFields';
+import PartyBFields from './PartyBFields';
+import QuotationMetaFields from './QuotationMetaFields';
+import QuotationActions from './QuotationActions';
+import ImportExportActions from './ImportExportActions';
+import { useQuotationStorage } from '../hooks/useQuotationStorage';
+import { createEmptyBookletPart, createEmptyItem } from '../domain/quotationFactory';
+import {
+  saveCustomers,
+  savePartyBRecords,
+  saveQuotationHistory,
+  setLastSalesMobile,
+  setLastSalesName,
+  type SavedQuotation,
+} from '../storage/localStorageRepository';
 
 interface Props {
   data: QuotationData;
   onChange: (data: QuotationData) => void;
   onReset: () => void;
+  onClearLocalData: () => void;
 }
 
-interface SavedQuotation {
-  id: string;
-  timestamp: string;
-  title: string;
-  data: QuotationData;
-}
-
-const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
-  const [history, setHistory] = useState<SavedQuotation[]>([]);
+const QuotationForm: React.FC<Props> = ({ data, onChange, onReset, onClearLocalData }) => {
+  const { history, setHistory, customers, setCustomers, partyBRecords, setPartyBRecords } = useQuotationStorage();
   const [showHistory, setShowHistory] = useState(false);
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [showCustomerList, setShowCustomerList] = useState(false);
-  const [isGeneratingImg, setIsGeneratingImg] = useState(false);
+  const [showPartyBList, setShowPartyBList] = useState(false);
+  const { shareToLine, isGenerating: isGeneratingImg } = useLineShare(data);
   const customerListRef = useRef<HTMLDivElement>(null);
+  const partyBListRef = useRef<HTMLDivElement>(null);
 
   const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
 
   useEffect(() => {
-    const savedHistory = localStorage.getItem('quotationHistory');
-    if (savedHistory) try { setHistory(JSON.parse(savedHistory)); } catch (e) { console.error(e); }
-    const savedCustomers = localStorage.getItem('customerDatabase');
-    if (savedCustomers) try { setCustomers(JSON.parse(savedCustomers)); } catch (e) { console.error(e); }
 
-    if ((window as any).liff) {
-      (window as any).liff.init({ liffId: "2010201815-z3mfiA3O" })
-        .then(() => console.log("LIFF Init Success"))
-        .catch((err: any) => console.error("LIFF Init Error:", err));
-    }
+    initLiff()?.catch(() => undefined);
 
     const handleClickOutside = (event: MouseEvent) => {
       if (customerListRef.current && !customerListRef.current.contains(event.target as Node)) setShowCustomerList(false);
+      if (partyBListRef.current && !partyBListRef.current.contains(event.target as Node)) setShowPartyBList(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -49,8 +56,8 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     onChange({ ...data, [name]: value });
-    if (name === 'salesName') localStorage.setItem('lastSalesName', value);
-    if (name === 'salesMobile') localStorage.setItem('lastSalesMobile', value);
+    if (name === 'salesName') setLastSalesName(value);
+    if (name === 'salesMobile') setLastSalesMobile(value);
     if (name === 'customerName' && value.length > 0) setShowCustomerList(true);
   };
 
@@ -61,6 +68,11 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     onChange({ ...data, items: newItems });
   };
 
+  const handlePartyBChange = (field: keyof Party, value: string) => {
+    onChange({ ...data, partyB: { ...data.partyB, [field]: value } });
+    if (field === 'name' && partyBRecords.length > 0) setShowPartyBList(true);
+  };
+
   const handleItemFieldChange = (index: number, fieldName: keyof QuotationItem, value: string) => {
     const newItems = [...data.items];
     newItems[index] = { ...newItems[index], [fieldName]: value };
@@ -68,7 +80,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
   };
 
   const addItem = () => {
-    onChange({ ...data, items: [...data.items, { id: generateId(), jobName: '', sheetSize: '', printColor: '', reverseColor: '', specialColor: '', paperName: '', processingDetails: '', quantity: '', unit: '份', unitPrice: '', taxType: 'exclude', manualAmount: '' }] });
+    onChange({ ...data, items: [...data.items, createEmptyItem()] });
   };
 
   const removeItem = (index: number) => {
@@ -96,7 +108,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
 
   const addBookletPart = (jobIndex: number) => {
     const newJobs = [...data.bookletJobs];
-    newJobs[jobIndex].parts.push({ id: generateId(), partName: '', sheetSize: '', printColor: '', reverseColor: '', specialColor: '', paperName: '', processingDetails: '' });
+    newJobs[jobIndex].parts.push(createEmptyBookletPart(''));
     onChange({ ...data, bookletJobs: newJobs });
   };
 
@@ -114,7 +126,14 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     const idx = newCustomers.findIndex(c => c.name === newCustomer.name);
     if (idx >= 0) newCustomers[idx] = newCustomer; else newCustomers.unshift(newCustomer);
     setCustomers(newCustomers);
-    localStorage.setItem('customerDatabase', JSON.stringify(newCustomers));
+    saveCustomers(newCustomers);
+  };
+
+  const updatePartyBDatabase = (newData: QuotationData) => {
+    if (!newData.partyB.name.trim()) return;
+    const newRecords = upsertPartyBRecord(partyBRecords, newData.partyB);
+    setPartyBRecords(newRecords);
+    savePartyBRecords(newRecords);
   };
 
   const handleExport = (askName = true) => {
@@ -137,7 +156,8 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     return fileName;
   };
 
-  const shareToLine = async () => {
+  /* shareToLine is provided by useLineShare. */
+  /*
     const previewElement = document.querySelector('.preview-container') as HTMLElement;
     
     if (!previewElement) {
@@ -168,7 +188,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
           await navigator.share({
             files: [file],
             title: '報價單圖檔',
-            text: `這是來自捷采印刷的報價單：${customer} - ${firstJob}`
+            text: buildQuotationShareMessage(customer, firstJob || '')
           });
           setIsGeneratingImg(false);
           return;
@@ -189,7 +209,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
       alert("圖檔產生失敗，請再試一次。");
     }
     setIsGeneratingImg(false);
-  };
+  */
 
   const validateForm = () => {
     if (!data.customerName || data.customerName.trim().length < 4) {
@@ -209,9 +229,10 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     if (!data.customerName && !firstJob) { if(!silent) alert('請至少輸入客戶名稱或印件名稱再儲存'); return; }
     
     const newSaved: SavedQuotation = { id: generateId(), timestamp: new Date().toLocaleString(), title: `${data.customerName || '未命名客戶'} - ${firstJob || '未命名印件'}`, data: { ...data } };
-    const newHistory = [newSaved, ...history].slice(0, 20);
-    setHistory(newHistory); localStorage.setItem('quotationHistory', JSON.stringify(newHistory));
-    updateCustomerDatabase(data); 
+    const newHistory = [newSaved, ...history];
+    setHistory(newHistory.slice(0, 20)); saveQuotationHistory(newHistory);
+    updateCustomerDatabase(data);
+    updatePartyBDatabase(data);
     
     if (!silent) {
       handleExport();
@@ -226,8 +247,7 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     saveToHistory(true);
     handleExport(true); 
 
-    const liff = (window as any).liff;
-    if (liff && liff.isInClient()) {
+    if (isLiffClient()) {
       alert("LINE 內部瀏覽器不支援直接列印。\n\n系統已為您自動儲存紀錄並準備下載 JSON 備份。\n請點擊右上角 [...] 並選擇「在預設瀏覽器開啟」即可列印 PDF。");
     } else {
       window.print();
@@ -239,15 +259,20 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     setShowCustomerList(false);
   };
 
+  const selectPartyB = (partyB: Party) => {
+    onChange({ ...data, partyB: normalizePartyB(partyB) });
+    setShowPartyBList(false);
+  };
+
   const loadHistory = (saved: SavedQuotation) => {
-    if (confirm(`確定要載入「${saved.title}」嗎？這會覆蓋目前輸入的內容。`)) { onChange(saved.data); setShowHistory(false); }
+    if (confirm(`確定要載入「${saved.title}」嗎？這會覆蓋目前輸入的內容。`)) { onChange(normalizeQuotationData(saved.data)); setShowHistory(false); }
   };
 
   const deleteHistory = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (confirm('確定要刪除這筆紀錄嗎？')) {
       const newHistory = history.filter(item => item.id !== id);
-      setHistory(newHistory); localStorage.setItem('quotationHistory', JSON.stringify(newHistory));
+      setHistory(newHistory); saveQuotationHistory(newHistory);
     }
   };
 
@@ -255,10 +280,13 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
     const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
-      try {
-        const importedData = JSON.parse(event.target?.result as string);
-        if (importedData) { onChange(importedData); alert('匯入成功！'); }
-      } catch { alert('解析失敗'); }
+      const result = parseQuotationJson(typeof event.target?.result === 'string' ? event.target.result : '');
+      if (result.success) {
+        onChange(result.data);
+        alert('匯入成功！');
+      } else {
+        alert(`匯入失敗：\n${formatValidationErrors(result.errors)}`);
+      }
       e.target.value = '';
     };
     reader.readAsText(file);
@@ -281,53 +309,24 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
         <h2>{data.quotationType === 'single' ? '單張類' : data.quotationType === 'booklet' ? '冊子類' : '百貨類'}報價輸入</h2>
         <div className="header-actions">
           <button className="history-toggle-btn" onClick={() => setShowHistory(!showHistory)}>{showHistory ? '關閉紀錄' : '歷史紀錄'}</button>
-          <label className="import-btn">匯入<input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} /></label>
+          <ImportExportActions onImport={handleImport} onExport={() => handleExport()} />
           <button className="reset-btn" onClick={onReset}>清空</button>
+          <button className="reset-btn" onClick={onClearLocalData}>清除本機資料</button>
         </div>
       </div>
 
-      {showHistory && (
-        <div className="history-panel">
-          <h3>最近儲存的報價單</h3>
-          {history.length === 0 ? <p className="no-history">尚無紀錄</p> : (
-            <div className="history-list">
-              {history.map(item => (
-                <div key={item.id} className="history-item" onClick={() => loadHistory(item)}>
-                  <div className="history-info"><div className="history-title">{item.title}</div><div className="history-time">{item.timestamp}</div></div>
-                  <button className="delete-history-btn" onClick={(e) => deleteHistory(e, item.id)}>刪除</button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {showHistory && <HistoryPanel history={history} onLoad={loadHistory} onDelete={deleteHistory} />}
       
       <div className="section-title">基本資訊</div>
+      <QuotationMetaFields data={data} onChange={handleChange} />
+      {/*
       <div className="form-row">
         <div className="form-group"><label>業務人員 (自動記憶)</label><input type="text" name="salesName" value={data.salesName} onChange={handleChange} /></div>
         <div className="form-group"><label>業務電話 (自動記憶)</label><input type="text" name="salesMobile" value={data.salesMobile} onChange={handleChange} /></div>
-      </div>
+      </div> */}
       
-      <div className="form-group" style={{ position: 'relative' }}>
-        <label>客戶名稱</label>
-        <input type="text" name="customerName" value={data.customerName} onChange={handleChange} onFocus={() => customers.length > 0 && setShowCustomerList(true)} autoComplete="off" />
-        {showCustomerList && customers.filter(c => c.name.toLowerCase().includes(data.customerName.toLowerCase())).length > 0 && (
-          <div className="customer-dropdown" ref={customerListRef}>
-            {customers.filter(c => c.name.toLowerCase().includes(data.customerName.toLowerCase())).map((c, idx) => (
-              <div key={idx} className="customer-option" onClick={() => selectCustomer(c)}><div className="c-name">{c.name}</div><div className="c-info">{c.contactPerson} | {c.phone}</div></div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="form-row">
-        <div className="form-group"><label>聯絡人</label><input type="text" name="contactPerson" value={data.contactPerson} onChange={handleChange} /></div>
-        <div className="form-group"><label>電話</label><input type="text" name="phone" value={data.phone} onChange={handleChange} /></div>
-      </div>
-      <div className="form-row">
-        <div className="form-group"><label>行動電話</label><input type="text" name="mobile" value={data.mobile} onChange={handleChange} /></div>
-        <div className="form-group"><label>傳真</label><input type="text" name="fax" value={data.fax} onChange={handleChange} /></div>
-      </div>
+      <CustomerFields data={data} customers={customers} listRef={customerListRef} showList={showCustomerList} onChange={handleChange} onFocus={() => customers.length > 0 && setShowCustomerList(true)} onSelect={selectCustomer} />
+      <PartyBFields partyB={data.partyB} records={partyBRecords} listRef={partyBListRef} showList={showPartyBList} onChange={handlePartyBChange} onFocus={() => partyBRecords.length > 0 && setShowPartyBList(true)} onSelect={selectPartyB} />
       <div className="form-row">
         <div className="form-group">
           <label>訂印日期</label>
@@ -367,20 +366,14 @@ const QuotationForm: React.FC<Props> = ({ data, onChange, onReset }) => {
         />
       )}
 
-      <div className="section-title">其他條款</div>
+      {/* <div className="section-title">其他條款</div>
       <div className="form-group"><label>其他備註</label><textarea name="remarks" value={data.remarks} onChange={handleChange} rows={2} /></div>
       <div className="form-row">
         <div className="form-group"><label>付款辦法</label><input type="text" name="paymentMethod" value={data.paymentMethod} onChange={handleChange} /></div>
         <div className="form-group"><label>交貨地點</label><input type="text" name="deliveryLocation" value={data.deliveryLocation} onChange={handleChange} /></div>
-      </div>
+      </div> */}
 
-      <div className="action-buttons">
-        <button className="save-btn" onClick={() => saveToHistory()}>儲存此報價單</button>
-        <button className="export-img-btn" onClick={shareToLine} disabled={isGeneratingImg} style={{ backgroundColor: '#00b900', color: 'white' }}>
-          {isGeneratingImg ? '處理中...' : '儲存圖片 (JPG)'}
-        </button>
-        <button className="print-button" onClick={handlePrint}>列印報價單 (PDF)</button>
-      </div>
+      <QuotationActions onSave={() => saveToHistory()} onShare={shareToLine} onPrint={handlePrint} isGenerating={isGeneratingImg} />
     </div>
   );
 };

@@ -6,11 +6,14 @@
   "scripts": {
     "dev": "vite",
     "dev:windows": "pushd \"%CD%\" && npm run dev -- --open --host",
+    "typecheck": "tsc -b --pretty false",
     "build": "tsc -b && vite build",
     "build:windows": "pushd \"%CD%\" && npm run build",
     "lint": "eslint .",
     "test:print-layout": "node scripts/verify-print-layout.mjs",
-    "preview": "vite preview"
+    "verify": "npm run typecheck && npm test -- --run && npm run lint && npm run build && npm run test:print-layout",
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "html2canvas": "^1.4.1",
@@ -29,6 +32,7 @@
     "globals": "^17.6.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "vitest": "^4.1.10"
   }
 }

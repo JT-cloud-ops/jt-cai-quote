@@ -5,84 +5,17 @@ import './styles/Preview.css'
 import QuotationForm from './components/QuotationForm'
 import QuotationPreview from './components/QuotationPreview'
 import Dashboard from './components/Dashboard'
-import type { QuotationData, QuotationItem, BookletJob, BookletPart } from './types'
+import type { QuotationData } from './types'
+import { createEmptyQuotation } from './domain/quotationFactory'
+import { formatValidationErrors, parseQuotationData } from './domain/quotationValidation'
+import { clearLocalData, setLastCompanyId, setLastSalesMobile, setLastSalesName } from './storage/localStorageRepository'
 
 type ViewMode = 'dashboard' | 'single' | 'booklet' | 'dept';
 
 function App() {
   const [view, setView] = useState<ViewMode>('dashboard');
 
-  const generateId = () => {
-    return Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
-  };
-
-  const createEmptyItem = (): QuotationItem => ({
-    id: generateId(),
-    jobName: '',
-    sheetSize: '',
-    printColor: '',
-    reverseColor: '',
-    specialColor: '',
-    paperName: '',
-    processingDetails: '',
-    quantity: '',
-    unit: '份',
-    unitPrice: '',
-    taxType: 'exclude',
-    manualAmount: '',
-  });
-
-  const createEmptyBookletPart = (name: string): BookletPart => ({
-    id: generateId(),
-    partName: name,
-    sheetSize: '',
-    printColor: '',
-    reverseColor: '',
-    specialColor: '',
-    paperName: '',
-    processingDetails: '',
-  });
-
-  const createEmptyBookletJob = (): BookletJob => ({
-    id: generateId(),
-    jobName: '',
-    jobSheetSize: '',
-    bindingMethod: '',
-    quantity: '',
-    unit: '本',
-    unitPrice: '',
-    hqQuantity: '',
-    parts: [
-      createEmptyBookletPart('封面'),
-      createEmptyBookletPart('扉頁'),
-      createEmptyBookletPart('內頁'),
-    ],
-  });
-
-  const getInitialData = (type: 'single' | 'booklet' | 'dept' = 'single'): QuotationData => ({
-    companyId: localStorage.getItem('lastCompanyId') || 'jie-cai',
-    quotationType: type,
-    customerName: '',
-    contactPerson: '',
-    phone: '',
-    mobile: '',
-    fax: '',
-    items: type === 'single' ? [createEmptyItem()] : [],
-    bookletJobs: (type === 'booklet' || type === 'dept') ? [createEmptyBookletJob()] : [],
-    remarks: '',
-    orderYear: '',
-    orderMonth: '',
-    orderDay: '',
-    paymentMethod: '',
-    deliveryYear: '',
-    deliveryMonth: '',
-    deliveryDay: '',
-    deliveryLocation: '',
-    salesName: localStorage.getItem('lastSalesName') || '',
-    salesMobile: localStorage.getItem('lastSalesMobile') || '',
-  });
-
-  const [quotationData, setQuotationData] = useState<QuotationData>(getInitialData());
+  const [quotationData, setQuotationData] = useState<QuotationData>(createEmptyQuotation());
 
   // 強化版：檢查 URL 是否含有分享的資料
   useEffect(() => {
@@ -90,7 +23,6 @@ function App() {
     const sharedData = urlParams.get('import');
     
     if (sharedData) {
-      console.log("偵測到匯入資料...");
       try {
         // 先嘗試直接 base64 解碼，若失敗則嘗試 URL 解碼後再處理
         let decodedStr = "";
@@ -100,22 +32,26 @@ function App() {
           decodedStr = decodeURIComponent(atob(decodeURIComponent(sharedData)));
         }
         
-        const data = JSON.parse(decodedStr);
-        if (data && data.quotationType) {
-          setQuotationData(data);
-          setView(data.quotationType);
-          // 使用 setTimeout 確保畫面渲染後再彈出，增加成功率
-          setTimeout(() => {
-            alert(`已成功匯入來自「${data.customerName}」的報價單！`);
-          }, 500);
-          
-          // 清除 URL，避免重新整理時重複匯入
-          const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-          window.history.replaceState({path: newUrl}, '', newUrl);
+        const result = parseQuotationData(JSON.parse(decodedStr) as unknown);
+        if (!result.success) {
+          alert(`匯入失敗：\n${formatValidationErrors(result.errors)}`);
+          return;
         }
+
+        const data = result.data;
+        setQuotationData(data);
+        setView(data.quotationType);
+          // 使用 setTimeout 確保畫面渲染後再彈出，增加成功率
+        setTimeout(() => {
+          alert(`已成功匯入來自「${data.customerName}」的報價單！`);
+        }, 500);
       } catch (e) {
         console.error('匯入解析失敗:', e);
         alert('匯入連結似乎已損壞，請嘗試重新分享一次。');
+      } finally {
+        // 清除 URL，避免成功或失敗後重新整理時重複匯入
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({path: newUrl}, '', newUrl);
       }
     }
   }, []);
@@ -128,26 +64,33 @@ function App() {
         : quotationData.bookletJobs[0].jobName;
         
       if (!hasContent) {
-        setQuotationData(getInitialData(view as any));
+        setQuotationData(createEmptyQuotation(view as 'single' | 'booklet' | 'dept'));
       }
     }
   }, [view]);
 
   const handleReset = () => {
     if (confirm('確定要清空所有內容嗎？')) {
-      setQuotationData(getInitialData(view === 'dashboard' ? 'single' : (view as any)));
+      setQuotationData(createEmptyQuotation(view === 'dashboard' ? 'single' : view));
+    }
+  };
+
+  const handleClearLocalData = () => {
+    if (confirm('確定要清除本機儲存的歷史報價、客戶與乙方資料嗎？此操作無法復原。')) {
+      clearLocalData();
+      window.location.reload();
     }
   };
 
   const handleSalesChange = (name: string, mobile: string) => {
     setQuotationData(prev => ({ ...prev, salesName: name, salesMobile: mobile }));
-    localStorage.setItem('lastSalesName', name);
-    localStorage.setItem('lastSalesMobile', mobile);
+    setLastSalesName(name);
+    setLastSalesMobile(mobile);
   };
 
   const handleCompanyChange = (companyId: string) => {
     setQuotationData(prev => ({ ...prev, companyId }));
-    localStorage.setItem('lastCompanyId', companyId);
+    setLastCompanyId(companyId);
   };
 
   const backToDashboard = () => setView('dashboard');
@@ -182,6 +125,7 @@ function App() {
               data={quotationData} 
               onChange={setQuotationData} 
               onReset={handleReset}
+              onClearLocalData={handleClearLocalData}
             />
             <div className="preview-wrapper" style={{ overflowX: 'auto' }}>
               <QuotationPreview 

@@ -1,10 +1,13 @@
 import { readFileSync } from 'node:fs';
 
 const form = readFileSync(new URL('../src/components/QuotationForm.tsx', import.meta.url), 'utf8');
+const actions = readFileSync(new URL('../src/components/QuotationActions.tsx', import.meta.url), 'utf8');
 const formCss = readFileSync(new URL('../src/styles/Form.css', import.meta.url), 'utf8');
 const domain = readFileSync(new URL('../src/domain/quotationCalculations.ts', import.meta.url), 'utf8');
 const previewCss = readFileSync(new URL('../src/styles/Preview.css', import.meta.url), 'utf8');
 const preview = readFileSync(new URL('../src/components/QuotationPreview.tsx', import.meta.url), 'utf8');
+const singleRow = readFileSync(new URL('../src/components/SingleQuotationRow.tsx', import.meta.url), 'utf8');
+const bookletRows = readFileSync(new URL('../src/components/BookletQuotationRows.tsx', import.meta.url), 'utf8');
 const singleSheetForm = readFileSync(new URL('../src/components/forms/SingleSheetForm.tsx', import.meta.url), 'utf8');
 const bookletForm = readFileSync(new URL('../src/components/forms/BookletForm.tsx', import.meta.url), 'utf8');
 const printColorFields = readFileSync(new URL('../src/components/forms/PrintColorFields.tsx', import.meta.url), 'utf8');
@@ -13,7 +16,7 @@ const printColorUtils = readFileSync(new URL('../src/shared/utils/printColor.ts'
 const checks = [
   {
     name: 'JPG export button uses clear transfer wording',
-    pass: form.includes('export-img-btn') && form.includes('(JPG)'),
+    pass: actions.includes('export-img-btn') && actions.includes('(JPG)'),
   },
   {
     name: 'JPG export button keeps a green visual treatment',
@@ -33,11 +36,11 @@ const checks = [
   },
   {
     name: 'quotation body cells use centered wrapping class',
-    pass: preview.includes('quote-cell-center-wrap'),
+    pass: singleRow.includes('quote-cell-center-wrap') && bookletRows.includes('quote-cell-center-wrap'),
   },
   {
     name: 'booklet and department part-name cells keep a right-aligned exception',
-    pass: preview.includes('quote-part-name-cell'),
+    pass: bookletRows.includes('quote-part-name-cell'),
   },
   {
     name: 'centered wrapping cells allow automatic wrapping',
@@ -69,7 +72,7 @@ const checks = [
   },
   {
     name: 'preview uses formatted print color output',
-    pass: preview.includes('formatPrintColor(item.printColor, item.reverseColor, item.specialColor)') && preview.includes('formatPrintColor(part.printColor, part.reverseColor, part.specialColor)'),
+    pass: singleRow.includes('formatPrintColor(item.printColor, item.reverseColor, item.specialColor)') && bookletRows.includes('formatPrintColor(part.printColor, part.reverseColor, part.specialColor)'),
   },
   {
     name: 'print color selector no longer exposes prompt choices',

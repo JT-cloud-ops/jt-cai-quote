@@ -1,73 +1,34 @@
-# React + TypeScript + Vite
+# 估價單系統前端
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+本專案使用 React、TypeScript、Vite 與 ESLint。
 
-Currently, two official plugins are available:
+## 開發
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 完整驗證
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run verify
 ```
+
+此指令會依序執行 TypeScript 型別檢查、Vitest 測試、ESLint、正式建置與列印版面檢查；列印檢查完成條件為 16/16。
+
+## 其他命令
+
+- `npm run build`：建立 production bundle。
+- `npm run test:print-layout`：只執行列印版面契約檢查。
+- `npm run lint`：檢查程式碼風格與未使用程式。
+
+## LIFF
+
+LIFF ID 由 `src/shared/utils/liff.ts` 集中管理，型別宣告位於 `src/types/liff.d.ts`。更換 LIFF 應用後請執行 `npm run verify`。
+
+## 專案文件
+
+規格與驗證紀錄位於上層 `docs/`：[[2026-08-28_報價明細表格_SPEC]]、[[2026-08-28_報價明細表格_SDD]]、[[2026-08-28_報價明細表格_PLAN]]、[[2026-08-28_報價明細表格_CHECK]]。
+
+最新版本就緒稽核：[[2026-08-30_版本就緒稽核_SPEC]]、[[2026-08-30_版本就緒稽核_SDD]]、[[2026-08-30_版本就緒稽核_PLAN]]、[[2026-08-30_版本就緒稽核_CHECK]]。

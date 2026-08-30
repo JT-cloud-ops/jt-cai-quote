@@ -7,6 +7,17 @@ export interface Customer {
   deliveryLocation: string;
 }
 
+export interface Party {
+  name: string;
+  representative: string;
+  address: string;
+  taxId: string;
+  phone: string;
+  fax: string;
+  contactPerson: string;
+  mobile: string;
+}
+
 export interface QuotationItem {
   id: string;
   jobName: string;
@@ -56,6 +67,7 @@ export interface QuotationData {
   phone: string;
   mobile: string;
   fax: string;
+  partyB: Party;
   
   // 單張類使用
   items: QuotationItem[];
