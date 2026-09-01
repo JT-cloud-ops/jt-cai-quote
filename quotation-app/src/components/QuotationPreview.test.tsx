@@ -43,6 +43,13 @@ const createQuotationData = (partyB: QuotationData['partyB']): QuotationData => 
 });
 
 describe('QuotationPreview party B contract section', () => {
+  it('renders the quotation date with Chinese date units', () => {
+    const data = createQuotationData({ name: '', representative: '', address: '', taxId: '', phone: '', fax: '', contactPerson: '', mobile: '' });
+    const markup = renderToStaticMarkup(<QuotationPreview data={data} />);
+    expect(markup).toMatch(/\d+ 年 \d+ 月 \d+ 日/);
+    expect(markup).not.toContain('撟?');
+  });
+
   it('renders remarks and calculated summary rows', () => {
     const data = createQuotationData({ name: '', representative: '', address: '', taxId: '', phone: '', fax: '', contactPerson: '', mobile: '' });
     data.items[0] = { ...data.items[0], jobName: '彙總測試', quantity: '2', unitPrice: '100' };

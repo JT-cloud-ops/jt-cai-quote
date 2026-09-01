@@ -15,7 +15,7 @@ export const SingleQuotationRow: React.FC<Props> = ({ item }) => {
     <td className="quote-cell-center-wrap">{item.paperName}</td><td className="quote-cell-center-wrap multi-line">{item.processingDetails}</td>
     <td className="quote-cell-center-wrap">{item.quantity ? `${item.quantity}${item.unit}` : ''}</td>
     <td className="quote-cell-center-wrap">{item.unitPrice ? formatCurrency(price) : ''}</td>
-    <td className="quote-cell-center-wrap">{amount > 0 ? <>{formatCurrency(amount)}<span style={{ fontSize: 'calc(8pt * var(--layout-scale))', marginLeft: '2pt', display: 'inline-block' }}>{item.taxType === 'include' ? '(?怎?)' : '(?芰?)'}</span></> : ''}</td>
+    <td className="quote-cell-center-wrap">{amount > 0 ? <>{formatCurrency(amount)}<span style={{ fontSize: 'calc(8pt * var(--layout-scale))', marginLeft: '2pt', display: 'inline-block' }}>{item.taxType === 'include' ? '(含稅)' : '(未稅)'}</span></> : ''}</td>
   </tr>;
 };
 

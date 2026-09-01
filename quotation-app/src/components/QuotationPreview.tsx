@@ -46,7 +46,7 @@ const QuotationPreview: React.FC<Props> = ({ data }) => {
         <h2 className="main-title">報 價 單</h2>
       </div>
 
-      <QuotationMetaGrid customerName={data.customerName} contactPerson={data.contactPerson} phone={data.phone} mobile={data.mobile} fax={data.fax} dateLabel={`${year} 撟?${month} ??${day} ??`} />
+      <QuotationMetaGrid customerName={data.customerName} contactPerson={data.contactPerson} phone={data.phone} mobile={data.mobile} fax={data.fax} dateLabel={`${year} 年 ${month} 月 ${day} 日`} />
 
       
       <QuotationTable>

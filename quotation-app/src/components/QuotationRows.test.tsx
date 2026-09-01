@@ -14,6 +14,17 @@ describe('quotation row components', () => {
     expect(html).toContain('200');
   });
 
+  it('renders readable tax labels for single and booklet rows', () => {
+    const includeHtml = renderToStaticMarkup(<table><tbody><SingleQuotationRow item={{ ...item, taxType: 'include', manualAmount: '200' }} /></tbody></table>);
+    const excludeHtml = renderToStaticMarkup(<table><tbody><SingleQuotationRow item={{ ...item, taxType: 'exclude', manualAmount: '200' }} /></tbody></table>);
+    const bookletHtml = renderToStaticMarkup(<table><tbody><BookletQuotationRows job={{ ...job, quantity: '1', unitPrice: '200' }} isDepartment={false} /></tbody></table>);
+    expect(includeHtml).toContain('(含稅)');
+    expect(excludeHtml).toContain('(未稅)');
+    expect(bookletHtml).toContain('(未稅)');
+    expect(includeHtml).not.toContain('?');
+    expect(bookletHtml).not.toContain('?');
+  });
+
   it('renders booklet rows with the expected row span', () => {
     const html = renderToStaticMarkup(<table><tbody><BookletQuotationRows job={job} isDepartment={false} /></tbody></table>);
     expect(html).toContain('手冊');
